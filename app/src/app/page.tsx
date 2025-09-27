@@ -1,7 +1,45 @@
+'use client'
+import {useState} from 'react'
 import Image from "next/image";
 
+type Role = "Admin" | "Management" | "User"
+
 export default function Home() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState<Role>("User")
+  const handleSubmit: React.FormEventHandler = async (e) => {
+    e.preventDefault()
+    let res
+    try {
+      res = await fetch('/api/user', {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      })
+      console.log('did it?')
+      console.log(JSON.stringify(res))
+    } catch {
+      console.log('danger')
+    }
+  }
   return (
+    <>
+      <form action='https://google.com' method='POST' onSubmit={handleSubmit}>
+        <label>Email:</label>
+        <input type='email' name='email' onChange={e => setEmail(e.target.value)}></input>
+        <label>Password:</label>
+        <input type='password' name='password' onChange={e => setPassword(e.target.value)}></input>
+        <label>Role:</label>
+        <select name='role' value={role} onChange={e => setRole(e.target.value as Role)}>
+          <option value="User">User</option>
+          <option value="Management">Management</option>
+          <option value="Admin">Admin</option>
+        </select>
+        <button type='submit'>Submit</button>    
+      </form>
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <Image
@@ -98,6 +136,7 @@ export default function Home() {
           Go to nextjs.org →
         </a>
       </footer>
-    </div>
+      </div>
+      </>
   );
 }
