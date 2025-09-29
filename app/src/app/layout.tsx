@@ -19,15 +19,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  dashboard,
+  landing,
 }: Readonly<{
   children: React.ReactNode;
+  dashboard: React.ReactNode;
+  landing: React.ReactNode;
 }>) {
+  const isLoggedIn = false;
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        {isLoggedIn ? dashboard : landing}
       </body>
     </html>
   );
