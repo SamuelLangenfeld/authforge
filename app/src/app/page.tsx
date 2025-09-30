@@ -1,5 +1,11 @@
 import "react";
+import { useRouter } from 'next/navigation';
+import Landing from "./landing/page";
+import Dashboard from "./dashboard/page";
 
 export default function Page() {
-  return <p>🐕</p>;
+  const isLoggedIn = false;
+  return (
+    <Landing />
+  )
 }

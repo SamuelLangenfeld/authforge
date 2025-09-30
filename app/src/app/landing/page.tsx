@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Landing() {
   const [email, setEmail] = useState("");
@@ -7,6 +8,7 @@ export default function Landing() {
   const [organization, setOrganization] = useState("");
   const [name, setName] = useState("");
   const [loginType, setLoginType] = useState("login");
+  const router = useRouter();
 
   const handleLogin: React.FormEventHandler = async (e) => {
     e.preventDefault();
@@ -19,8 +21,6 @@ export default function Landing() {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      console.log("did it?");
-      console.log(JSON.stringify(res));
     } catch {
       console.log("danger");
     }
@@ -37,8 +37,7 @@ export default function Landing() {
         method: "POST",
         body: JSON.stringify({ email, password, orgName: organization, name }),
       });
-      console.log("did it?");
-      console.log(JSON.stringify(res));
+      router.push("/dashboard");
     } catch {
       console.log("danger");
     }
@@ -56,7 +55,7 @@ export default function Landing() {
         <input
           type="text"
           name="name"
-          onChange={(e) => setOrganization(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
         ></input>
         <label>Email:</label>
         <input

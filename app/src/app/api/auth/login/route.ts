@@ -10,7 +10,9 @@ export async function POST(req: NextRequest) {
   let user;
   try {
     const { email, password } = await req.json();
-    user = await prisma.user.findUnique({ where: { email: email } });
+    user = await prisma.user.findUnique({
+      where: { email: email },
+    });
     if (!user) {
       const message = "no record of this email";
       return NextResponse.json({ success: false, message }, { status: 404 });
@@ -23,8 +25,7 @@ export async function POST(req: NextRequest) {
     if (success) {
       const token = generateToken({ userId: user.id });
       const response = NextResponse.json({
-        success: true,
-        message: `user: ${user?.email}`,
+        success: true
       });
       response.cookies.set("jwt", token, {
         httpOnly: true,

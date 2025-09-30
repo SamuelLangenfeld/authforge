@@ -6,7 +6,6 @@ export async function POST(req: NextRequest) {
   let user;
   try {
     const { email, password, name, orgName } = await req.json();
-    console.log("here", email, password, name, orgName);
     user = await prisma.user.create({
       data: { email, password, name },
     });
@@ -25,18 +24,28 @@ export async function POST(req: NextRequest) {
         name: "user",
       },
     });
-    const membership = await prisma.membership.create({
+    await prisma.membership.create({
       data: {
         userId: user.id,
         roleId: role.id,
         orgId: org.id,
       },
     });
-    console.log(membership);
+    user = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        memberships: {
+          include: {
+            organization: true,
+            role: true,
+          },
+        },
+      },
+    });
   } catch (e: unknown) {
     const message = errorMessage(e);
     console.log(message);
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
-  return NextResponse.json({ success: true, message: `user: ${user?.email}` });
+  return NextResponse.json({ success: true, data: { user } });
 }

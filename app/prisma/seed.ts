@@ -70,7 +70,6 @@ async function main() {
       roleId: userRole.id,
     },
   });
-  console.log({ alice, bob });
 }
 main()
   .then(async () => {
