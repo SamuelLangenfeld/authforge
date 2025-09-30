@@ -24,7 +24,7 @@ model Organization {
 
 model Role {
   id           String       @id @default(uuid())
-  name         String       @unique
+  name         String       
   memberships  Membership[]
 }
 

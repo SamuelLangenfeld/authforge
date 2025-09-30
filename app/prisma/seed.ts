@@ -1,13 +1,17 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
+
 async function main() {
+  const saltRounds = 10;
+  const demoPass = await bcrypt.hash("demo", saltRounds);
   const alice = await prisma.user.upsert({
     where: { email: "alice@prisma.io" },
     update: {},
     create: {
       email: "alice@demo.com",
       name: "Alice",
-      password: "demo",
+      password: demoPass,
     },
   });
   const bob = await prisma.user.upsert({
@@ -16,7 +20,7 @@ async function main() {
     create: {
       email: "bob@demo.com",
       name: "Bob",
-      password: "demo",
+      password: demoPass,
     },
   });
   const org = await prisma.organization.create({

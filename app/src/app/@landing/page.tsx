@@ -4,13 +4,15 @@ import { useState } from "react";
 export default function Landing() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [name, setName] = useState("");
   const [loginType, setLoginType] = useState("login");
 
-  const handleSubmit: React.FormEventHandler = async (e) => {
+  const handleLogin: React.FormEventHandler = async (e) => {
     e.preventDefault();
     let res;
     try {
-      res = await fetch("/api/user", {
+      res = await fetch("/api/auth/login", {
         headers: {
           "Content-Type": "application/json",
         },
@@ -24,10 +26,38 @@ export default function Landing() {
     }
   };
 
+  const handleSignup: React.FormEventHandler = async (e) => {
+    e.preventDefault();
+    let res;
+    try {
+      res = await fetch("/api/auth/register", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({ email, password, orgName: organization, name }),
+      });
+      console.log("did it?");
+      console.log(JSON.stringify(res));
+    } catch {
+      console.log("danger");
+    }
+  };
+
   return (
     <>
       <h1>Landing</h1>
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) =>
+          loginType === "login" ? handleLogin(e) : handleSignup(e)
+        }
+      >
+        <label>Full Name:</label>
+        <input
+          type="text"
+          name="name"
+          onChange={(e) => setOrganization(e.target.value)}
+        ></input>
         <label>Email:</label>
         <input
           type="email"
@@ -40,9 +70,19 @@ export default function Landing() {
           name="password"
           onChange={(e) => setPassword(e.target.value)}
         ></input>
+        <label>Organization Name:</label>
+        <input
+          type="text"
+          name="organization"
+          onChange={(e) => setOrganization(e.target.value)}
+        ></input>
         <div>
-          <button onClick={() => setLoginType("login")}>Login</button>
-          <button onClick={() => setLoginType("signup")}>Sign Up</button>
+          {/* <button type="button" onClick={() => setLoginType("login")}>
+            Login
+          </button> */}
+          <button type="button" onClick={() => setLoginType("signup")}>
+            Sign Up
+          </button>
         </div>
         <button type="submit">Submit</button>
       </form>
