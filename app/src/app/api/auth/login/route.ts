@@ -1,10 +1,9 @@
-export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { generateToken } from "@/app/lib/jwt";
 
-const bcrypt = require("bcryptjs");
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   let user;
@@ -23,9 +22,9 @@ export async function POST(req: NextRequest) {
     }
     const success = await bcrypt.compare(password, user.password);
     if (success) {
-      const token = generateToken({ userId: user.id });
+      const token = await generateToken({ userId: user.id });
       const response = NextResponse.json({
-        success: true
+        success: true,
       });
       response.cookies.set("jwt", token, {
         httpOnly: true,
@@ -37,7 +36,6 @@ export async function POST(req: NextRequest) {
       return response;
     } else {
       const message = "incorrect password";
-      console.log(message);
       return NextResponse.json({ success: false, message }, { status: 403 });
     }
   } catch (e: unknown) {

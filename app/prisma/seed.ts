@@ -5,19 +5,15 @@ const prisma = new PrismaClient();
 async function main() {
   const saltRounds = 10;
   const demoPass = await bcrypt.hash("demo", saltRounds);
-  const alice = await prisma.user.upsert({
-    where: { email: "alice@prisma.io" },
-    update: {},
-    create: {
+  const alice = await prisma.user.create({
+    data: {
       email: "alice@demo.com",
       name: "Alice",
       password: demoPass,
     },
   });
-  const bob = await prisma.user.upsert({
-    where: { email: "bob@prisma.io" },
-    update: {},
-    create: {
+  const bob = await prisma.user.create({
+    data: {
       email: "bob@demo.com",
       name: "Bob",
       password: demoPass,
@@ -28,17 +24,13 @@ async function main() {
       name: "Demo Org",
     },
   });
-  const adminRole = await prisma.role.upsert({
-    where: { name: "admin" },
-    update: {},
-    create: {
+  const adminRole = await prisma.role.create({
+    data: {
       name: "admin",
     },
   });
-  const userRole = await prisma.role.upsert({
-    where: { name: "user" },
-    update: {},
-    create: {
+  const userRole = await prisma.role.create({
+    data: {
       name: "user",
     },
   });

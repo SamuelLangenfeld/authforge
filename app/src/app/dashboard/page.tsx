@@ -1,17 +1,22 @@
 import OrganizationList from "./OrganizationList";
-
+import { headers } from "next/headers";
+import prisma from "../lib/db";
 export default async function Dashboard() {
-  let res;
   let user;
   try {
-    console.log("trying fetch");
-    res = await fetch(`${process.env.HOST_URL}/api/me`);
-    console.log(!!res);
-    if (!res.ok) {
-      throw new Error("Failed to fetch dashboard data");
-    }
-    const json = await res.json();
-    console.log(json);
+    const allheaders = await headers();
+    const userId = allheaders.get("x-user-id") || "";
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        memberships: {
+          include: {
+            organization: true,
+            role: true,
+          },
+        },
+      },
+    });
   } catch (e) {
     console.log(e);
   }
@@ -19,6 +24,7 @@ export default async function Dashboard() {
   return (
     <>
       <h1>Dashboard</h1>
+      <div>{user?.name}</div>
       {/* <OrganizationList user={user} /> */}
     </>
   );

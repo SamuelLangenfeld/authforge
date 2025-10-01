@@ -7,7 +7,7 @@ const publicRoutes = [
   "/api/auth/register",
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -29,11 +29,16 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(`${process.env.HOST_URL}`);
     }
     try {
-      const tokenData = verifyToken(token);
+      const tokenData = (await verifyToken(token)) as any;
       const { userId } = tokenData;
-      request.headers.set("x-user-id", userId);
-      return NextResponse.next();
-    } catch {
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-user-id", userId);
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    } catch (e) {
       if (pathname.startsWith("/api")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
@@ -52,9 +57,14 @@ export function middleware(request: NextRequest) {
     }
     try {
       const tokenData = verifyToken(token);
-      const { orgId } = tokenData;
-      request.headers.set("x-org-id", orgId);
-      return NextResponse.next();
+      const { orgId } = tokenData as any;
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-org-id", orgId);
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
     } catch {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

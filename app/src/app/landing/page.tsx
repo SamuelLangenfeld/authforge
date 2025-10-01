@@ -21,6 +21,7 @@ export default function Landing() {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
+      router.push("/dashboard");
     } catch {
       console.log("danger");
     }
@@ -76,9 +77,9 @@ export default function Landing() {
           onChange={(e) => setOrganization(e.target.value)}
         ></input>
         <div>
-          {/* <button type="button" onClick={() => setLoginType("login")}>
+          <button type="button" onClick={() => setLoginType("login")}>
             Login
-          </button> */}
+          </button>
           <button type="button" onClick={() => setLoginType("signup")}>
             Sign Up
           </button>
