@@ -11,7 +11,6 @@ export const generateToken = async ({ userId }: { userId: string }) => {
 };
 
 export const verifyToken = async (token: string) => {
-  console.log("attempting verify");
   const { payload } = await jwtVerify(token, encodedKey, {
     algorithms: ["HS256"],
   });

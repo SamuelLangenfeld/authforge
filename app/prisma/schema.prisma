@@ -22,6 +22,14 @@ model Organization {
   memberships  Membership[]
 }
 
+model ApiCredential {
+  id           String
+  orgId        String
+  organization Organization  @relation(fields: [orgId], references: [id])
+  clientId     String
+  clientSecret String
+}
+
 model Role {
   id           String       @id @default(uuid())
   name         String       

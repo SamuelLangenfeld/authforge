@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../lib/db";
 import errorMessage from "@/app/lib/errorMessage";
+import { randomBytes } from "crypto";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   let user;
+  let credentials;
   try {
     const { email, password, name, orgName } = await req.json();
     user = await prisma.user.create({
@@ -42,10 +45,21 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+    const apiKey = randomBytes(16).toString("hex"); // client_id
+    const apiSecret = randomBytes(32).toString("hex"); // client_secret
+    const encodedAPISecret = bcrypt.hash(apiKey, 10);
+    await prisma.apiCredential.create({
+      data: {
+        orgId: org.id,
+        clientId: apiKey,
+        clientSecret: encodedAPISecret,
+      },
+    });
+    credentials = { clientId: apiKey, clientSecret: apiSecret };
   } catch (e: unknown) {
     const message = errorMessage(e);
     console.log(message);
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
-  return NextResponse.json({ success: true, data: { user } });
+  return NextResponse.json({ success: true, data: { user, credentials } });
 }
