@@ -30,6 +30,13 @@ model ApiCredential {
   clientSecret String
 }
 
+model RefreshToken {
+  id           String
+  token        String
+  clientId     String
+  expiresAt    String
+}
+
 model Role {
   id           String       @id @default(uuid())
   name         String       

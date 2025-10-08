@@ -58,7 +58,6 @@ export async function POST(req: NextRequest) {
     credentials = { clientId: apiKey, clientSecret: apiSecret };
   } catch (e: unknown) {
     const message = errorMessage(e);
-    console.log(message);
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
   return NextResponse.json({ success: true, data: { user, credentials } });

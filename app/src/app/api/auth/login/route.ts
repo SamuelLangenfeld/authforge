@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { generateToken } from "@/app/lib/jwt";
-
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -14,7 +13,7 @@ export async function POST(req: NextRequest) {
     });
     if (!user) {
       const message = "no record of this email";
-      return NextResponse.json({ success: false, message }, { status: 404 });
+      return NextResponse.json({ success: false, message }, { status: 401 });
     }
     if (!user?.password) {
       const message = "password required";
