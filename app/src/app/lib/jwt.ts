@@ -17,6 +17,13 @@ export const generateBearerToken = async ({ clientId }: { clientId: string }) =>
     .sign(encodedKey);
 };
 
+export const generateRefreshToken = async ({ clientId }: { clientId: string }) => {
+  return new SignJWT({ clientId, type: 'refresh' })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("30d")
+    .sign(encodedKey);
+};
+
 export const verifyToken = async (token: string) => {
   const { payload } = await jwtVerify(token, encodedKey, {
     algorithms: ["HS256"],
