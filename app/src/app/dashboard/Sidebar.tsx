@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { User } from "@/app/lib/types";
 
 type SidebarProps = {
@@ -9,16 +10,32 @@ type SidebarProps = {
   selectedOrgId?: string;
 };
 
-export default function Sidebar({ user, onOrgSelect, selectedOrgId: externalSelectedOrgId }: SidebarProps) {
-  const [internalSelectedOrgId, setInternalSelectedOrgId] = useState<string | null>(
-    user.memberships[0]?.organization.id || null
-  );
+export default function Sidebar({
+  user,
+  onOrgSelect,
+  selectedOrgId: externalSelectedOrgId,
+}: SidebarProps) {
+  const router = useRouter();
+  const [internalSelectedOrgId, setInternalSelectedOrgId] = useState<
+    string | null
+  >(user.memberships[0]?.organization.id || null);
 
   const selectedOrgId = externalSelectedOrgId || internalSelectedOrgId;
 
   const handleOrgSelect = (orgId: string) => {
     setInternalSelectedOrgId(orgId);
     onOrgSelect?.(orgId);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -40,7 +57,9 @@ export default function Sidebar({ user, onOrgSelect, selectedOrgId: externalSele
                     : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                 }`}
               >
-                <div className="font-medium">{membership.organization.name}</div>
+                <div className="font-medium">
+                  {membership.organization.name}
+                </div>
                 <div className="text-xs mt-1 opacity-75 capitalize">
                   {membership.role.name}
                 </div>
@@ -51,10 +70,10 @@ export default function Sidebar({ user, onOrgSelect, selectedOrgId: externalSele
       </nav>
 
       <div className="mt-auto pt-4 border-t border-gray-800">
-        <button className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
-          Settings
-        </button>
-        <button className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
+        <button
+          onClick={handleLogout}
+          className="w-full text-left px-4 py-2 text-sm text-gray-400 hover:text-white hover:cursor-pointer transition-colors"
+        >
           Sign Out
         </button>
       </div>

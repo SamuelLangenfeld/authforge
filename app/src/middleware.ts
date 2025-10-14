@@ -5,6 +5,7 @@ const publicRoutes = [
   "/api/auth/token",
   "/api/auth/login",
   "/api/auth/register",
+  "/api/auth/logout",
 ];
 
 const clientRoutes = ["/dashboard", "/api/me", "/api/organizations"];
