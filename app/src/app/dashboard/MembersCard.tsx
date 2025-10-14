@@ -1,19 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type Member = {
-  id: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  role: {
-    id: string;
-    name: string;
-  };
-};
+import { Member } from "@/app/lib/types";
 
 type MembersCardProps = {
   organizationId: string;

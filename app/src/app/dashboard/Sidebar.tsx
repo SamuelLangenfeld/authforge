@@ -1,29 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type Organization = {
-  id: string;
-  name: string;
-};
-
-type Role = {
-  id: string;
-  name: string;
-};
-
-type Membership = {
-  id: string;
-  organization: Organization;
-  role: Role;
-};
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  memberships: Membership[];
-};
+import { User } from "@/app/lib/types";
 
 type SidebarProps = {
   user: User;
