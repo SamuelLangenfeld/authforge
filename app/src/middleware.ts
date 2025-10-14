@@ -7,24 +7,32 @@ const publicRoutes = [
   "/api/auth/register",
 ];
 
+const clientRoutes = ["/dashboard", "/api/me", "/api/organizations"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
     publicRoutes.some((route) => {
-      pathname.startsWith(route);
+      return pathname.startsWith(route);
     })
   ) {
     return NextResponse.next();
   }
   let token: string | undefined = "";
 
-  // /dashboard and /api/me are both client-side routes
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/api/me")) {
+  // client-side routes are authorized with JWT cookies
+  if (clientRoutes.some((route) => pathname.startsWith(route))) {
+    console.log("[Middleware] Client route detected:", pathname);
     token = request.cookies.get("jwt")?.value;
+    console.log("[Middleware] JWT token present:", !!token);
     if (!token) {
+      console.log("[Middleware] No JWT token found");
       if (pathname.startsWith("/api")) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return NextResponse.json(
+          { error: "Unauthorized - No JWT" },
+          { status: 401 }
+        );
       }
       return NextResponse.redirect(`${process.env.HOST_URL}`);
     }
@@ -40,7 +48,10 @@ export async function middleware(request: NextRequest) {
       });
     } catch (e) {
       if (pathname.startsWith("/api")) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return NextResponse.json(
+          { error: "Unauthorized - Invalid JWT" },
+          { status: 401 }
+        );
       }
       return NextResponse.redirect(`${process.env.HOST_URL}`);
     }
@@ -72,5 +83,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard", "/api/:path"],
+  matcher: ["/dashboard/:path*", "/api/:path*"],
 };
