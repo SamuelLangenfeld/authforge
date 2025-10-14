@@ -13,17 +13,11 @@ type SidebarProps = {
 export default function Sidebar({
   user,
   onOrgSelect,
-  selectedOrgId: externalSelectedOrgId,
+  selectedOrgId,
 }: SidebarProps) {
   const router = useRouter();
-  const [internalSelectedOrgId, setInternalSelectedOrgId] = useState<
-    string | null
-  >(user.memberships[0]?.organization.id || null);
-
-  const selectedOrgId = externalSelectedOrgId || internalSelectedOrgId;
 
   const handleOrgSelect = (orgId: string) => {
-    setInternalSelectedOrgId(orgId);
     onOrgSelect?.(orgId);
   };
 
