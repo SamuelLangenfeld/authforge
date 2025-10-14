@@ -1,6 +1,7 @@
-import OrganizationList from "./OrganizationList";
+import DashboardClient from "./DashboardClient";
 import { headers } from "next/headers";
 import prisma from "../lib/db";
+
 export default async function Dashboard() {
   let user;
   try {
@@ -21,11 +22,13 @@ export default async function Dashboard() {
     console.log(e);
   }
 
-  return (
-    <>
-      <h1>Dashboard</h1>
-      <div>{user?.name}</div>
-      {/* <OrganizationList user={user} /> */}
-    </>
-  );
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-600">Unable to load user data</p>
+      </div>
+    );
+  }
+
+  return <DashboardClient user={user} />;
 }
