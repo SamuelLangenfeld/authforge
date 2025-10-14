@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/lib/hooks/useAuth";
 
 export default function Landing() {
   const [email, setEmail] = useState("");
@@ -8,55 +8,16 @@ export default function Landing() {
   const [organization, setOrganization] = useState("");
   const [name, setName] = useState("");
   const [mode, setMode] = useState<"signin" | "register">("signin");
-  const [error, setError] = useState("");
-  const router = useRouter();
+  const { login, register, error, loading } = useAuth();
 
   const handleLogin: React.FormEventHandler = async (e) => {
     e.preventDefault();
-    setError("");
-    try {
-      const res = await fetch("/api/auth/login", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        router.push("/dashboard");
-      } else {
-        setError(data.message || "Login failed");
-      }
-    } catch {
-      setError("An error occurred. Please try again.");
-    }
+    await login(email, password);
   };
 
   const handleSignup: React.FormEventHandler = async (e) => {
     e.preventDefault();
-    setError("");
-    try {
-      const res = await fetch("/api/auth/register", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({ email, password, orgName: organization, name }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        router.push("/dashboard");
-      } else {
-        setError(data.message || "Registration failed");
-      }
-    } catch {
-      setError("An error occurred. Please try again.");
-    }
+    await register(email, password, name, organization);
   };
 
   return (
@@ -70,7 +31,6 @@ export default function Landing() {
             type="button"
             onClick={() => {
               setMode("signin");
-              setError("");
             }}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
               mode === "signin"
@@ -84,7 +44,6 @@ export default function Landing() {
             type="button"
             onClick={() => {
               setMode("register");
-              setError("");
             }}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
               mode === "register"
@@ -168,9 +127,14 @@ export default function Landing() {
           )}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition mt-6"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {mode === "signin" ? "Sign In" : "Create Account"}
+            {loading
+              ? "Please wait..."
+              : mode === "signin"
+              ? "Sign In"
+              : "Create Account"}
           </button>
         </form>
       </div>

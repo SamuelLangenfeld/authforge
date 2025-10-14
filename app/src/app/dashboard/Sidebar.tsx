@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { User } from "@/app/lib/types";
+import { useAuth } from "@/app/lib/hooks/useAuth";
 
 type SidebarProps = {
   user: User;
@@ -14,7 +14,7 @@ export default function Sidebar({
   onOrgSelect,
   selectedOrgId,
 }: SidebarProps) {
-  const router = useRouter();
+  const { logout } = useAuth();
 
   const handleOrgSelect = (orgId: string) => {
     onOrgSelect?.(orgId);
@@ -22,10 +22,7 @@ export default function Sidebar({
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-      router.push("/");
+      await logout();
     } catch (error) {
       console.error("Logout failed:", error);
     }

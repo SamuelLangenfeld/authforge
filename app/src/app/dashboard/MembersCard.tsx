@@ -1,42 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Member } from "@/app/lib/types";
+import { useOrganizationMembers } from "@/app/lib/hooks/useOrganization";
 
 type MembersCardProps = {
   organizationId: string;
 };
 
 export default function MembersCard({ organizationId }: MembersCardProps) {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchMembers = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/organizations/${organizationId}/members`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch members");
-        }
-
-        const data = await response.json();
-        setMembers(data.members || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (organizationId) {
-      fetchMembers();
-    }
-  }, [organizationId]);
+  const { members, loading, error } = useOrganizationMembers(organizationId);
 
   if (loading) {
     return (
