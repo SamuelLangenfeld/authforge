@@ -8,7 +8,7 @@ const publicRoutes = [
   "/api/auth/logout",
 ];
 
-const clientRoutes = ["/dashboard", "/api/me", "/api/organizations"];
+const clientRoutes = ["/dashboard", "/api/organizations"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

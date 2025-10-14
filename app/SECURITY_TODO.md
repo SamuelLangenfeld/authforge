@@ -165,7 +165,6 @@ response.cookies.set("jwt", token, {
   sameSite: "strict",
   path: "/",
   maxAge: 60 * 60,
-  domain: process.env.COOKIE_DOMAIN,  // Add explicit domain
 });
 ```
 
