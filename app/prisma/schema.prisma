@@ -20,18 +20,19 @@ model Organization {
   id           String       @id @default(uuid())
   name         String
   memberships  Membership[]
+  apiCredentials  ApiCredential[]
 }
 
 model ApiCredential {
-  id           String
+  id           String       @id @default(uuid())
   orgId        String
   organization Organization  @relation(fields: [orgId], references: [id])
-  clientId     String
+  clientId     String       @unique
   clientSecret String
 }
 
 model RefreshToken {
-  id           String
+  id           String       @id @default(uuid())
   token        String
   clientId     String
   expiresAt    String

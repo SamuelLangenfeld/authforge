@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     });
     const apiKey = randomBytes(16).toString("hex"); // client_id
     const apiSecret = randomBytes(32).toString("hex"); // client_secret
-    const encodedAPISecret = bcrypt.hash(apiKey, 10);
+    const encodedAPISecret = await bcrypt.hash(apiKey, 10);
     await prisma.apiCredential.create({
       data: {
         orgId: org.id,

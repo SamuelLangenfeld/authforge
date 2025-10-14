@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
         data: {
           token: refreshToken,
           clientId,
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
         },
       });
       return NextResponse.json({ access_token: token, token_type: "Bearer" });
