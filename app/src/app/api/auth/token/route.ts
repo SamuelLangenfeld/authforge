@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "../../../lib/db";
+import prisma from "@/app//lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { generateBearerToken, generateRefreshToken } from "@/app/lib/jwt";
 import bcrypt from "bcryptjs";
