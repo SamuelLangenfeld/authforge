@@ -1,4 +1,4 @@
-import DashboardClient from "./DashboardClient";
+import DashboardClient from "./components/DashboardClient";
 import { headers } from "next/headers";
 import prisma from "../lib/db";
 
