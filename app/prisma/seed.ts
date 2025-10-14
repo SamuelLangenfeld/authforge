@@ -6,7 +6,6 @@ async function main() {
   const saltRounds = 10;
   const demoPass = await bcrypt.hash("demo", saltRounds);
 
-  // Create 5 users
   const alice = await prisma.user.create({
     data: {
       email: "alice@demo.com",
@@ -135,6 +134,115 @@ async function main() {
     create: {
       userId: eve.id,
       orgId: org.id,
+      roleId: userRole.id,
+    },
+  });
+
+  const acmeCorp = await prisma.organization.create({
+    data: {
+      name: "Acme Corp",
+    },
+  });
+
+  const techStart = await prisma.organization.create({
+    data: {
+      name: "TechStart Inc",
+    },
+  });
+
+  const globalSolutions = await prisma.organization.create({
+    data: {
+      name: "Global Solutions",
+    },
+  });
+
+  const innovationLabs = await prisma.organization.create({
+    data: {
+      name: "Innovation Labs",
+    },
+  });
+
+  // Acme Corp memberships
+  await prisma.membership.create({
+    data: {
+      userId: alice.id,
+      orgId: acmeCorp.id,
+      roleId: adminRole.id,
+    },
+  });
+  await prisma.membership.create({
+    data: {
+      userId: bob.id,
+      orgId: acmeCorp.id,
+      roleId: userRole.id,
+    },
+  });
+  await prisma.membership.create({
+    data: {
+      userId: charlie.id,
+      orgId: acmeCorp.id,
+      roleId: userRole.id,
+    },
+  });
+
+  // TechStart Inc memberships
+  await prisma.membership.create({
+    data: {
+      userId: bob.id,
+      orgId: techStart.id,
+      roleId: adminRole.id,
+    },
+  });
+  await prisma.membership.create({
+    data: {
+      userId: diana.id,
+      orgId: techStart.id,
+      roleId: adminRole.id,
+    },
+  });
+  await prisma.membership.create({
+    data: {
+      userId: eve.id,
+      orgId: techStart.id,
+      roleId: userRole.id,
+    },
+  });
+
+  // Global Solutions memberships
+  await prisma.membership.create({
+    data: {
+      userId: charlie.id,
+      orgId: globalSolutions.id,
+      roleId: adminRole.id,
+    },
+  });
+  await prisma.membership.create({
+    data: {
+      userId: alice.id,
+      orgId: globalSolutions.id,
+      roleId: userRole.id,
+    },
+  });
+
+  // Innovation Labs memberships
+  await prisma.membership.create({
+    data: {
+      userId: diana.id,
+      orgId: innovationLabs.id,
+      roleId: adminRole.id,
+    },
+  });
+  await prisma.membership.create({
+    data: {
+      userId: eve.id,
+      orgId: innovationLabs.id,
+      roleId: userRole.id,
+    },
+  });
+  await prisma.membership.create({
+    data: {
+      userId: bob.id,
+      orgId: innovationLabs.id,
       roleId: userRole.id,
     },
   });

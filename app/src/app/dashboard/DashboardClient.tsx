@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import MembersCard from "./MembersCard";
+import UserCard from "./UserCard";
 import { User } from "@/app/lib/types";
 
 type DashboardClientProps = {
@@ -37,8 +38,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             <p className="text-gray-600">{user.email}</p>
           </div>
 
-          {isAdmin && selectedOrgId && (
-            <MembersCard organizationId={selectedOrgId} />
+          {selectedOrgId && (
+            isAdmin ? (
+              <MembersCard organizationId={selectedOrgId} />
+            ) : (
+              <UserCard user={user} organizationId={selectedOrgId} />
+            )
           )}
         </div>
       </main>

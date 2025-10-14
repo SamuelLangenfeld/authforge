@@ -23,11 +23,8 @@ export async function middleware(request: NextRequest) {
 
   // client-side routes are authorized with JWT cookies
   if (clientRoutes.some((route) => pathname.startsWith(route))) {
-    console.log("[Middleware] Client route detected:", pathname);
     token = request.cookies.get("jwt")?.value;
-    console.log("[Middleware] JWT token present:", !!token);
     if (!token) {
-      console.log("[Middleware] No JWT token found");
       if (pathname.startsWith("/api")) {
         return NextResponse.json(
           { error: "Unauthorized - No JWT" },
@@ -67,7 +64,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     try {
-      const tokenData = verifyToken(token);
+      const tokenData = await verifyToken(token);
       const { orgId } = tokenData as any;
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set("x-org-id", orgId);

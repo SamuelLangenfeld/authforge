@@ -9,8 +9,9 @@ export async function POST(req: NextRequest) {
   let credentials;
   try {
     const { email, password, name, orgName } = await req.json();
+    const hashedPassword = await bcrypt.hash(password, 10);
     user = await prisma.user.create({
-      data: { email, password, name },
+      data: { email, password: hashedPassword, name },
     });
     const org = await prisma.organization.create({
       data: {
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     });
     const apiKey = randomBytes(16).toString("hex"); // client_id
     const apiSecret = randomBytes(32).toString("hex"); // client_secret
-    const encodedAPISecret = await bcrypt.hash(apiKey, 10);
+    const encodedAPISecret = await bcrypt.hash(apiSecret, 10);
     await prisma.apiCredential.create({
       data: {
         orgId: org.id,

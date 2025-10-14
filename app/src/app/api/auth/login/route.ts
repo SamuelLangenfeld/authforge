@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       where: { email: email },
     });
     if (!user) {
-      const message = "no record of this email";
+      const message = "invalid credentials";
       return NextResponse.json({ success: false, message }, { status: 401 });
     }
     if (!user?.password) {
