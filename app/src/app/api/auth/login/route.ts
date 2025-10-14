@@ -12,12 +12,16 @@ export async function POST(req: NextRequest) {
       where: { email: email },
     });
     if (!user) {
-      const message = "invalid credentials";
-      return NextResponse.json({ success: false, message }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "invalid credentials" },
+        { status: 401 }
+      );
     }
     if (!user?.password) {
-      const message = "password required";
-      return NextResponse.json({ success: false, message }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "invalid credentials" },
+        { status: 403 }
+      );
     }
     const success = await bcrypt.compare(password, user.password);
     if (success) {
@@ -34,12 +38,14 @@ export async function POST(req: NextRequest) {
       });
       return response;
     } else {
-      const message = "incorrect password";
-      return NextResponse.json({ success: false, message }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "invalid credentials" },
+        { status: 403 }
+      );
     }
   } catch (e: unknown) {
     const message = errorMessage(e);
-    console.log("error", errorMessage);
+    console.log("error", message);
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
