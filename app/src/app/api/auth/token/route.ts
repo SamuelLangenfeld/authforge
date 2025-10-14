@@ -3,6 +3,7 @@ import prisma from "../../../lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { generateBearerToken } from "@/app/lib/jwt";
 import bcrypt from "bcryptjs";
+import type { Prisma } from "@prisma/client";
 /**
  *
  * @param req
@@ -31,12 +32,12 @@ import bcrypt from "bcryptjs";
  * @returns
  */
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
   const { clientId, clientSecret } = await req.json();
   let apiCredential;
   try {
     apiCredential = await prisma.apiCredential.findUnique({
-      where: { clientId },
+      where: { clientId: clientId as string } as Prisma.ApiCredentialWhereUniqueInput,
     });
     if (!apiCredential) {
       const message = "no record of this api key";
