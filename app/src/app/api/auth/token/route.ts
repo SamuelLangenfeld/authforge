@@ -3,7 +3,12 @@ import prisma from "@/app//lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { generateBearerToken, generateRefreshToken } from "@/app/lib/jwt";
 import bcrypt from "bcryptjs";
-import type { Prisma } from "@prisma/client";
+import { z } from "zod";
+
+const tokenSchema = z.object({
+  clientId: z.string().min(1, "Client ID is required").max(200, "Client ID is too long"),
+  clientSecret: z.string().min(1, "Client secret is required").max(200, "Client secret is too long"),
+});
 
 /**
  * POST /api/auth/token
@@ -22,21 +27,36 @@ import type { Prisma } from "@prisma/client";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { clientId, clientSecret } = await req.json();
+    const body = await req.json();
 
-    // Input validation
-    if (!clientId || !clientSecret) {
+    // Validate input with Zod
+    const validationResult = tokenSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      // Extract user-friendly error messages
+      const errors = validationResult.error.issues.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      }));
+
       return NextResponse.json(
-        { error: "clientId and clientSecret are required" },
+        {
+          success: false,
+          message: "Validation failed",
+          errors,
+        },
         { status: 400 }
       );
     }
 
+    // Use validated data (now type-safe!)
+    const { clientId, clientSecret } = validationResult.data;
+
     // Find API credential
     const apiCredential = await prisma.apiCredential.findUnique({
       where: {
-        clientId: clientId as string,
-      } as Prisma.ApiCredentialWhereUniqueInput,
+        clientId,
+      },
     });
 
     // Verify credentials (use generic error message to prevent enumeration)

@@ -1,11 +1,13 @@
 import { NextResponse, NextRequest } from "next/server";
 import { verifyToken } from "./app/lib/jwt";
+import { UserJWTPayload, APIJWTPayload } from "./app/lib/types";
 
 const publicRoutes = [
   "/api/auth/token",
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/logout",
+  "/api/auth/refresh",
 ];
 
 const clientRoutes = ["/dashboard", "/api/organizations"];
@@ -35,7 +37,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(`${process.env.HOST_URL}`);
     }
     try {
-      const tokenData = (await verifyToken(token)) as any;
+      const tokenData = (await verifyToken(token)) as UserJWTPayload;
       const { userId } = tokenData;
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set("x-user-id", userId);
@@ -65,10 +67,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     try {
-      const tokenData = await verifyToken(token);
-      const { orgId } = tokenData as any;
+      const tokenData = (await verifyToken(token)) as APIJWTPayload;
+      const { orgId } = tokenData;
       const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("x-org-id", orgId);
+      requestHeaders.set("x-org-id", orgId || "");
       return NextResponse.next({
         request: {
           headers: requestHeaders,

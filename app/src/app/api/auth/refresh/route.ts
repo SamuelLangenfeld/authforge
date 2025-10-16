@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
 import errorMessage from "@/app/lib/errorMessage";
-import { generateBearerToken, generateRefreshToken, verifyToken } from "@/app/lib/jwt";
+import {
+  generateBearerToken,
+  generateRefreshToken,
+  verifyToken,
+} from "@/app/lib/jwt";
+import { z } from "zod";
+
+const refreshSchema = z.object({
+  refresh_token: z
+    .string()
+    .min(1, "Refresh token is required")
+    .max(1000, "Refresh token is too long"),
+});
+
+const invalidMessage = "Invalid or expired token";
 
 /**
  * POST /api/auth/refresh
@@ -21,29 +35,41 @@ import { generateBearerToken, generateRefreshToken, verifyToken } from "@/app/li
  */
 export async function POST(req: NextRequest) {
   try {
-    const { refresh_token } = await req.json();
+    const body = await req.json();
 
-    // Input validation
-    if (!refresh_token) {
+    // Validate input with Zod
+    const validationResult = refreshSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      // Extract user-friendly error messages
+      const errors = validationResult.error.issues.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      }));
+
       return NextResponse.json(
-        { error: "refresh_token is required" },
+        {
+          success: false,
+          message: "Validation failed",
+          errors,
+        },
         { status: 400 }
       );
     }
+
+    // Use validated data (now type-safe!)
+    const { refresh_token } = validationResult.data;
 
     // Verify JWT signature and expiration
     let payload;
     try {
       payload = await verifyToken(refresh_token);
     } catch (e) {
-      return NextResponse.json(
-        { error: "Invalid or expired refresh token" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: invalidMessage }, { status: 401 });
     }
 
     // Verify token type
-    if (payload.type !== 'refresh') {
+    if (payload.type !== "refresh") {
       return NextResponse.json(
         { error: "Invalid token type" },
         { status: 401 }
@@ -62,10 +88,7 @@ export async function POST(req: NextRequest) {
 
     // Verify token exists in database
     if (!storedToken) {
-      return NextResponse.json(
-        { error: "Invalid refresh token" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: invalidMessage }, { status: 401 });
     }
 
     // Check database-level expiration
@@ -75,10 +98,7 @@ export async function POST(req: NextRequest) {
       await prisma.refreshToken.delete({
         where: { id: storedToken.id },
       });
-      return NextResponse.json(
-        { error: "Refresh token has expired" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: invalidMessage }, { status: 401 });
     }
 
     // Generate new tokens

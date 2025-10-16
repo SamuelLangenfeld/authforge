@@ -1,5 +1,29 @@
 // Shared types for the application
 
+// JWT Payload Types
+export type UserJWTPayload = {
+  userId: string;
+  iat?: number;
+  exp?: number;
+};
+
+export type APIJWTPayload = {
+  clientId: string;
+  type: "api";
+  orgId?: string; // TODO: Currently not included in token, see SECURITY_TODO.md #18
+  iat?: number;
+  exp?: number;
+};
+
+export type RefreshJWTPayload = {
+  clientId: string;
+  type: "refresh";
+  iat?: number;
+  exp?: number;
+};
+
+export type JWTPayload = UserJWTPayload | APIJWTPayload | RefreshJWTPayload;
+
 export type Organization = {
   id: string;
   name: string;
