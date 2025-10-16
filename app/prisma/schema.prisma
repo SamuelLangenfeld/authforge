@@ -14,6 +14,9 @@ model User {
   name         String
   password     String
   memberships  Membership[]
+  createdAt    DateTime     @default(now())
+
+  @@index([email])
 }
 
 model Organization {
@@ -26,16 +29,24 @@ model Organization {
 model ApiCredential {
   id           String       @id @default(uuid())
   orgId        String
-  organization Organization  @relation(fields: [orgId], references: [id])
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
   clientId     String       @unique
   clientSecret String
+  createdAt    DateTime     @default(now())
+
+  @@index([orgId])
+  @@index([clientId])
 }
 
 model RefreshToken {
   id           String       @id @default(uuid())
-  token        String
+  token        String       @unique
   clientId     String
-  expiresAt    String
+  expiresAt    DateTime
+  createdAt    DateTime     @default(now())
+
+  @@index([clientId])
+  @@index([expiresAt])
 }
 
 model Role {
@@ -49,8 +60,13 @@ model Membership {
   userId         String
   orgId          String
   roleId         String
-  user           User         @relation(fields: [userId], references: [id])
-  organization   Organization @relation(fields: [orgId], references: [id])
-  role           Role         @relation(fields: [roleId], references: [id])
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  role           Role         @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
   @@unique([userId, orgId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([roleId])
 }

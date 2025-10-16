@@ -92,8 +92,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check database-level expiration
-    const expiresAt = new Date(storedToken.expiresAt);
-    if (expiresAt < new Date()) {
+    if (storedToken.expiresAt < new Date()) {
       // Clean up expired token
       await prisma.refreshToken.delete({
         where: { id: storedToken.id },
@@ -126,9 +125,7 @@ export async function POST(req: NextRequest) {
       data: {
         token: newRefreshToken,
         clientId,
-        expiresAt: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 30 days
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       },
     });
 

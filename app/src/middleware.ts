@@ -2,6 +2,16 @@ import { NextResponse, NextRequest } from "next/server";
 import { verifyToken } from "./app/lib/jwt";
 import { UserJWTPayload, APIJWTPayload } from "./app/lib/types";
 import env from "./app/lib/env";
+import {
+  checkRateLimit,
+  getClientIdentifier,
+  getRateLimitHeaders,
+  authRateLimiter,
+  registrationRateLimiter,
+  tokenRateLimiter,
+  refreshRateLimiter,
+  apiRateLimiter,
+} from "./app/lib/ratelimit";
 
 const publicRoutes = [
   "/api/auth/token",
@@ -15,6 +25,71 @@ const clientRoutes = ["/dashboard", "/api/organizations"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const clientId = getClientIdentifier(request.headers);
+
+  // Apply rate limiting to auth endpoints
+  if (pathname.startsWith("/api/auth/login")) {
+    const rateLimitResult = await checkRateLimit(clientId, authRateLimiter);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+  }
+
+  if (pathname.startsWith("/api/auth/register")) {
+    const rateLimitResult = await checkRateLimit(
+      clientId,
+      registrationRateLimiter
+    );
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+  }
+
+  if (pathname.startsWith("/api/auth/token")) {
+    const rateLimitResult = await checkRateLimit(clientId, tokenRateLimiter);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+  }
+
+  if (pathname.startsWith("/api/auth/refresh")) {
+    const rateLimitResult = await checkRateLimit(clientId, refreshRateLimiter);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+  }
 
   if (
     publicRoutes.some((route) => {
@@ -60,6 +135,20 @@ export async function middleware(request: NextRequest) {
 
   // other /api routes are for SaaS apps
   if (pathname.startsWith("/api")) {
+    // Apply rate limiting for API routes
+    const rateLimitResult = await checkRateLimit(clientId, apiRateLimiter);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult),
+        }
+      );
+    }
+
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
