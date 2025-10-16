@@ -101,8 +101,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: invalidMessage }, { status: 401 });
     }
 
+    // Look up the API credential to get the orgId
+    const apiCredential = await prisma.apiCredential.findUnique({
+      where: { clientId },
+    });
+
+    if (!apiCredential) {
+      return NextResponse.json({ error: invalidMessage }, { status: 401 });
+    }
+
     // Generate new tokens
-    const newAccessToken = await generateBearerToken({ clientId });
+    const newAccessToken = await generateBearerToken({
+      clientId,
+      orgId: apiCredential.orgId,
+    });
     const newRefreshToken = await generateRefreshToken({ clientId });
 
     // Rotate refresh token: delete old token and store new one

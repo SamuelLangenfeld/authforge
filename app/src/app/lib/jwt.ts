@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
+import env from "@/app/lib/env";
 
-const secretKey = process.env.JWT_SECRET;
+const secretKey = env.JWT_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export const generateToken = async ({ userId }: { userId: string }) => {
@@ -10,15 +11,25 @@ export const generateToken = async ({ userId }: { userId: string }) => {
     .sign(encodedKey);
 };
 
-export const generateBearerToken = async ({ clientId }: { clientId: string }) => {
-  return new SignJWT({ clientId, type: 'api' })
+export const generateBearerToken = async ({
+  clientId,
+  orgId,
+}: {
+  clientId: string;
+  orgId: string;
+}) => {
+  return new SignJWT({ clientId, orgId, type: "api" })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("1h")
     .sign(encodedKey);
 };
 
-export const generateRefreshToken = async ({ clientId }: { clientId: string }) => {
-  return new SignJWT({ clientId, type: 'refresh' })
+export const generateRefreshToken = async ({
+  clientId,
+}: {
+  clientId: string;
+}) => {
+  return new SignJWT({ clientId, type: "refresh" })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("30d")
     .sign(encodedKey);

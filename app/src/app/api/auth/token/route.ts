@@ -6,8 +6,14 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const tokenSchema = z.object({
-  clientId: z.string().min(1, "Client ID is required").max(200, "Client ID is too long"),
-  clientSecret: z.string().min(1, "Client secret is required").max(200, "Client secret is too long"),
+  clientId: z
+    .string()
+    .min(1, "Client ID is required")
+    .max(200, "Client ID is too long"),
+  clientSecret: z
+    .string()
+    .min(1, "Client secret is required")
+    .max(200, "Client secret is too long"),
 });
 
 /**
@@ -59,20 +65,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Verify credentials (use generic error message to prevent enumeration)
-    if (!apiCredential) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
-
     const isValid = await bcrypt.compare(
       clientSecret,
-      apiCredential.clientSecret
+      apiCredential?.clientSecret ||
+        "$2a$10$dummyhashtopreventtimingattack00000000000000000000000000"
     );
 
-    if (!isValid) {
+    if (!apiCredential || !isValid) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
@@ -80,7 +79,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate tokens
-    const accessToken = await generateBearerToken({ clientId });
+    const accessToken = await generateBearerToken({
+      clientId,
+      orgId: apiCredential.orgId,
+    });
     const refreshToken = await generateRefreshToken({ clientId });
 
     // Delete existing refresh tokens for this client before creating new one

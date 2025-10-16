@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { verifyToken } from "./app/lib/jwt";
 import { UserJWTPayload, APIJWTPayload } from "./app/lib/types";
+import env from "./app/lib/env";
 
 const publicRoutes = [
   "/api/auth/token",
@@ -34,7 +35,7 @@ export async function middleware(request: NextRequest) {
           { status: 401 }
         );
       }
-      return NextResponse.redirect(`${process.env.HOST_URL}`);
+      return NextResponse.redirect(`${env.HOST_URL}`);
     }
     try {
       const tokenData = (await verifyToken(token)) as UserJWTPayload;
@@ -53,7 +54,7 @@ export async function middleware(request: NextRequest) {
           { status: 401 }
         );
       }
-      return NextResponse.redirect(`${process.env.HOST_URL}`);
+      return NextResponse.redirect(`${env.HOST_URL}`);
     }
   }
 
@@ -68,9 +69,10 @@ export async function middleware(request: NextRequest) {
     }
     try {
       const tokenData = (await verifyToken(token)) as APIJWTPayload;
-      const { orgId } = tokenData;
+      const { orgId, clientId } = tokenData;
       const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("x-org-id", orgId || "");
+      requestHeaders.set("x-org-id", orgId);
+      requestHeaders.set("x-client-id", clientId);
       return NextResponse.next({
         request: {
           headers: requestHeaders,

@@ -4,6 +4,7 @@ import errorMessage from "@/app/lib/errorMessage";
 import { generateToken } from "@/app/lib/jwt";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import env from "@/app/lib/env";
 
 const loginSchema = z.object({
   email: z.email("Invalid email address"),
@@ -50,30 +51,32 @@ export async function POST(req: NextRequest) {
     user = await prisma.user.findUnique({
       where: { email: email },
     });
-    if (!user || !user?.password) {
-      return getCredentialError();
-    }
+
     const success = await bcrypt.compare(
       password,
       user?.password ||
         "$2a$10$dummyhashtopreventtimingattack00000000000000000000000000"
     );
-    if (success) {
-      const token = await generateToken({ userId: user.id });
-      const response = NextResponse.json({
-        success: true,
-      });
-      response.cookies.set("jwt", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-        maxAge: 60 * 60,
-      });
-      return response;
-    } else {
+
+    if (!user || !user.password || !success) {
       return getCredentialError();
     }
+
+    const token = await generateToken({ userId: user.id });
+
+    const response = NextResponse.json({
+      success: true,
+    });
+
+    response.cookies.set("jwt", token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60,
+    });
+
+    return response;
   } catch (e: unknown) {
     const message = errorMessage(e);
     return NextResponse.json({ success: false, message }, { status: 500 });

@@ -10,7 +10,7 @@ export type UserJWTPayload = {
 export type APIJWTPayload = {
   clientId: string;
   type: "api";
-  orgId?: string; // TODO: Currently not included in token, see SECURITY_TODO.md #18
+  orgId: string;
   iat?: number;
   exp?: number;
 };
