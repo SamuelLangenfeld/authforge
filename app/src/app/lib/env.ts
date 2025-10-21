@@ -5,10 +5,9 @@
 
 // Determine environment
 const nodeEnv = process.env.NODE_ENV || "development";
-const isDevelopment = nodeEnv === "development";
 
 // Required environment variables that are always needed
-const requiredEnvVars = ["JWT_SECRET", "HOST_URL", "RESEND_API_KEY", "FROM_EMAIL"] as const;
+const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL", "HOST_URL", "RESEND_API_KEY", "FROM_EMAIL"] as const;
 
 // Validate all required environment variables exist
 requiredEnvVars.forEach((variable) => {
@@ -19,16 +18,6 @@ requiredEnvVars.forEach((variable) => {
     );
   }
 });
-
-// Validate environment-specific DATABASE_URL
-const databaseUrlVar = isDevelopment ? "DEV_DATABASE_URL" : "PROD_DATABASE_URL";
-if (!process.env[databaseUrlVar]) {
-  throw new Error(
-    `Missing required environment variable: ${databaseUrlVar}. ` +
-      `Please ensure it is set in your .env file for ${nodeEnv} environment.`
-  );
-}
-const databaseUrl = process.env[databaseUrlVar]!;
 
 // Validate HOST_URL format
 const hostUrl = process.env.HOST_URL!;
@@ -41,7 +30,7 @@ if (!/^https?:\/\/.+/.test(hostUrl)) {
 // Export validated environment variables with proper types
 const env = {
   JWT_SECRET: process.env.JWT_SECRET!,
-  DATABASE_URL: databaseUrl,
+  DATABASE_URL: process.env.DATABASE_URL!,
   HOST_URL: hostUrl,
   RESEND_API_KEY: process.env.RESEND_API_KEY!,
   FROM_EMAIL: process.env.FROM_EMAIL!,
