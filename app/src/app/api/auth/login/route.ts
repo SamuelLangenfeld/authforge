@@ -3,16 +3,8 @@ import prisma from "@/app/lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { generateToken } from "@/app/lib/jwt";
 import bcrypt from "bcryptjs";
-import { z } from "zod";
 import env from "@/app/lib/env";
-
-const loginSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .max(72, "Password is too long"),
-});
+import { loginSchema } from "@/app/lib/schemas";
 
 const getCredentialError = () => {
   return NextResponse.json(

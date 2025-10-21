@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app//lib/db";
 import { generateBearerToken, generateRefreshToken } from "@/app/lib/jwt";
-import { z } from "zod";
 import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
 import { comparePassword, DUMMY_PASSWORD_HASH } from "@/app/lib/crypto-helpers";
 import { getRefreshTokenExpiration } from "@/app/lib/token-helpers";
-
-const tokenSchema = z.object({
-  clientId: z
-    .string()
-    .min(1, "Client ID is required")
-    .max(200, "Client ID is too long"),
-  clientSecret: z
-    .string()
-    .min(1, "Client secret is required")
-    .max(200, "Client secret is too long"),
-});
+import { tokenSchema } from "@/app/lib/schemas";
 
 /**
  * POST /api/auth/token
@@ -42,6 +31,9 @@ export async function POST(req: NextRequest) {
     if (validationError) return validationError;
 
     // Use validated data (now type-safe!)
+    if (!validationResult.success) {
+      throw new Error("Validation should have been caught earlier");
+    }
     const { clientId, clientSecret } = validationResult.data;
 
     // Find API credential

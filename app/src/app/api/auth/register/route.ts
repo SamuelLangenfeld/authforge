@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
-import errorMessage from "@/app/lib/errorMessage";
-import { z } from "zod";
 import { sendVerificationEmail } from "@/app/lib/email";
 import { userWithMembershipsSelect } from "@/app/lib/prisma-helpers";
 import { hashPassword } from "@/app/lib/crypto-helpers";
 import { generateApiCredentials, generateVerificationToken } from "@/app/lib/token-helpers";
 import { handleValidationError, handleRouteError } from "@/app/lib/route-helpers";
-
-const registerSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z
-    .string()
-    .min(12, "Password must be at least 12 characters")
-    .max(72, "Password must be less than 72 characters"),
-  name: z.string().min(1, "Name is required").max(100),
-  orgName: z.string().min(1, "Organization name required").max(100),
-});
+import { registerSchema } from "@/app/lib/schemas";
 
 export async function POST(req: NextRequest) {
   let user;

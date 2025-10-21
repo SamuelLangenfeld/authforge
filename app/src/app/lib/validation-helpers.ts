@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { ZodSafeParseReturnType } from "zod";
+import { ZodSafeParseResult } from "zod";
 
 /**
  * Standardized validation error response
  * Used across all API routes for consistent error handling
  */
 export function handleValidationError<T>(
-  validationResult: ZodSafeParseReturnType<T, T>
+  validationResult: ZodSafeParseResult<T>
 ): NextResponse | null {
   if (!validationResult.success) {
-    const errors = validationResult.error.issues.map((err) => ({
+    const errors = validationResult.error.issues.map((err: any) => ({
       field: err.path.join("."),
       message: err.message,
     }));
@@ -32,13 +32,18 @@ export function handleValidationError<T>(
  * Provides more detail about invalid query params
  */
 export function handleQueryValidationError<T>(
-  validationResult: ZodSafeParseReturnType<T, T>
+  validationResult: ZodSafeParseResult<T>
 ): NextResponse | null {
   if (!validationResult.success) {
+    const errors = validationResult.error.issues.map((err: any) => ({
+      field: err.path.join("."),
+      message: err.message,
+    }));
+
     return NextResponse.json(
       {
         error: "Invalid query parameters",
-        details: validationResult.error.flatten(),
+        errors,
       },
       { status: 400 }
     );

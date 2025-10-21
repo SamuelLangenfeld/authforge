@@ -5,16 +5,9 @@ import {
   generateRefreshToken,
   verifyToken,
 } from "@/app/lib/jwt";
-import { z } from "zod";
 import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
 import { getRefreshTokenExpiration } from "@/app/lib/token-helpers";
-
-const refreshSchema = z.object({
-  refresh_token: z
-    .string()
-    .min(1, "Refresh token is required")
-    .max(1000, "Refresh token is too long"),
-});
+import { refreshSchema } from "@/app/lib/schemas";
 
 const invalidMessage = "Invalid or expired token";
 
@@ -44,6 +37,9 @@ export async function POST(req: NextRequest) {
     if (validationError) return validationError;
 
     // Use validated data (now type-safe!)
+    if (!validationResult.success) {
+      throw new Error("Validation should have been caught earlier");
+    }
     const { refresh_token } = validationResult.data;
 
     // Verify JWT signature and expiration

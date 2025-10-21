@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
 import { sendVerificationEmail } from "@/app/lib/email";
-import { z } from "zod";
 import { handleValidationError, handleRouteError } from "@/app/lib/route-helpers";
 import { generateVerificationToken } from "@/app/lib/token-helpers";
-
-const resendSchema = z.object({
-  email: z.email("Invalid email address"),
-});
+import { resendVerificationSchema } from "@/app/lib/schemas";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     // Validate input
-    const validationResult = resendSchema.safeParse(body);
+    const validationResult = resendVerificationSchema.safeParse(body);
     const validationError = handleValidationError(validationResult);
     if (validationError) return validationError;
 
