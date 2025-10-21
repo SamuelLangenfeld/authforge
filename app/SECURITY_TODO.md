@@ -395,62 +395,30 @@ Added `onDelete: Cascade` to foreign key relations (shown above).
 ## 🟡 MEDIUM Priority
 
 ### 7. Add CORS Configuration
-**Status:** Not implemented
+**Status:** ✅ IMPLEMENTED
 **Risk:** API accessible from any origin
 **Relevant for:** API routes used by external SaaS applications
+**Files:** `src/app/lib/cors.ts`, `src/middleware.ts:15,32-37,150-212`, `src/app/api/auth/token/route.ts`, `src/app/api/auth/refresh/route.ts`
 
-**Create `src/app/lib/cors.ts`:**
-```typescript
-import { NextResponse } from "next/server";
+**Implementation Details:**
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+Created `src/app/lib/cors.ts` with:
+- `getCorsHeaders()` - Returns appropriate CORS headers based on origin
+- `handleCorsPreFlight()` - Handles OPTIONS preflight requests
+- `addCorsHeaders()` - Adds CORS headers to existing responses
+- Development mode: Allows all origins when ALLOWED_ORIGINS is empty
+- Production mode: Only allows explicitly configured origins
 
-export function corsHeaders(origin: string | null) {
-  const isAllowed = origin && allowedOrigins.includes(origin);
+**Applied CORS to:**
+- ✅ `/api/auth/token` - OPTIONS handler and all responses
+- ✅ `/api/auth/refresh` - OPTIONS handler and all responses
+- ✅ Middleware - Handles OPTIONS preflight for all API routes and adds CORS headers to protected API route responses
+- ✅ Rate limit responses include CORS headers
 
-  return {
-    'Access-Control-Allow-Origin': isAllowed ? origin : '',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400',
-  };
-}
-
-export function handleCORS(request: Request) {
-  const origin = request.headers.get('origin');
-
-  // Handle preflight
-  if (request.method === 'OPTIONS') {
-    return new NextResponse(null, {
-      status: 204,
-      headers: corsHeaders(origin),
-    });
-  }
-
-  return null;
-}
-```
-
-**Apply to API routes:**
-```typescript
-export async function OPTIONS(req: NextRequest) {
-  return handleCORS(req) || new NextResponse(null, { status: 204 });
-}
-
-export async function POST(req: NextRequest) {
-  const corsResponse = handleCORS(req);
-  if (corsResponse) return corsResponse;
-
-  // ... route logic
-
-  const response = NextResponse.json({ ... });
-  const origin = req.headers.get('origin');
-  Object.entries(corsHeaders(origin)).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
-  return response;
-}
-```
+**Configuration:**
+- Set `ALLOWED_ORIGINS` in `.env` as comma-separated list of allowed origins
+- Example: `ALLOWED_ORIGINS=https://app1.com,https://app2.com`
+- Leave empty in development to allow all origins for testing
 
 ---
 
@@ -787,7 +755,7 @@ const nextConfig: NextConfig = {
 - [x] Security headers configured
 - [x] SameSite cookies configured
 - [x] Refresh token endpoint implemented with rotation
-- [ ] CORS policy configured for API routes
+- [x] CORS policy configured for API routes
 - [ ] Token cleanup cron job scheduled
 - [ ] Password fields excluded from API responses
 - [x] Middleware redirect validation (HOST_URL format validated)
@@ -828,6 +796,15 @@ const nextConfig: NextConfig = {
 ---
 
 ## 📝 Recent Changes Log
+
+### 2025-10-20
+- ✅ **MEDIUM #7 IMPLEMENTED:** CORS configuration for external SaaS API access
+  - Created `src/app/lib/cors.ts` with CORS utilities
+  - Added CORS handling to `/api/auth/token` and `/api/auth/refresh` routes
+  - Integrated CORS into middleware for all protected API routes
+  - Added `ALLOWED_ORIGINS` environment variable support
+  - Development mode allows all origins for testing
+  - Production mode requires explicit origin whitelist
 
 ### 2025-10-16 (Afternoon - Implementation)
 - ✅ **CRITICAL #1 FIXED:** Enhanced JWT_SECRET environment variable validation
@@ -887,9 +864,9 @@ Vercel's default body size limit for App Router: **4.5MB**
 **Priority Order for Production:**
 1. ✅ ~~Fix ALL CRITICAL issues (#1-6)~~ - **ALL COMPLETED** 🎉
 2. ⏳ Apply database migration (`npx prisma migrate dev`)
-3. Add CORS for API routes
+3. ✅ ~~Add CORS for API routes~~ - **COMPLETED** 🎉
 4. Set up token cleanup cron
-5. Review and implement MEDIUM priority items
+5. Review and implement remaining MEDIUM priority items
 6. Consider LOW priority items based on requirements
 
 **Next Steps:**

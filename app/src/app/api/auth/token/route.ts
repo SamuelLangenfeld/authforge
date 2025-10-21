@@ -4,6 +4,7 @@ import errorMessage from "@/app/lib/errorMessage";
 import { generateBearerToken, generateRefreshToken } from "@/app/lib/jwt";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { handleCorsPreFlight, addCorsHeaders } from "@/app/lib/cors";
 
 const tokenSchema = z.object({
   clientId: z
@@ -15,6 +16,16 @@ const tokenSchema = z.object({
     .min(1, "Client secret is required")
     .max(200, "Client secret is too long"),
 });
+
+/**
+ * OPTIONS /api/auth/token
+ * Handle CORS preflight requests from external SaaS applications
+ */
+export async function OPTIONS(req: NextRequest) {
+  const corsResponse = handleCorsPreFlight(req);
+  if (corsResponse) return corsResponse;
+  return new NextResponse(null, { status: 204 });
+}
 
 /**
  * POST /api/auth/token
@@ -45,7 +56,7 @@ export async function POST(req: NextRequest) {
         message: err.message,
       }));
 
-      return NextResponse.json(
+      const validationErrorResponse = NextResponse.json(
         {
           success: false,
           message: "Validation failed",
@@ -53,6 +64,7 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+      return addCorsHeaders(validationErrorResponse, req);
     }
 
     // Use validated data (now type-safe!)
@@ -72,10 +84,11 @@ export async function POST(req: NextRequest) {
     );
 
     if (!apiCredential || !isValid) {
-      return NextResponse.json(
+      const unauthorizedResponse = NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
+      return addCorsHeaders(unauthorizedResponse, req);
     }
 
     // Generate tokens
@@ -99,14 +112,20 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       access_token: accessToken,
       refresh_token: refreshToken,
       token_type: "Bearer",
       expires_in: 3600, // 1 hour in seconds
     });
+
+    return addCorsHeaders(response, req);
   } catch (e: unknown) {
     const message = errorMessage(e);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const errorResponse = NextResponse.json(
+      { error: message },
+      { status: 500 }
+    );
+    return addCorsHeaders(errorResponse, req);
   }
 }

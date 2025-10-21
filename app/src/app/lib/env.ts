@@ -45,6 +45,7 @@ const env = {
   HOST_URL: hostUrl,
   RESEND_API_KEY: process.env.RESEND_API_KEY!,
   FROM_EMAIL: process.env.FROM_EMAIL!,
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || "",
   NODE_ENV: nodeEnv,
 } as const;
 

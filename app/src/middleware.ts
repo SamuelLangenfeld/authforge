@@ -12,6 +12,7 @@ import {
   refreshRateLimiter,
   apiRateLimiter,
 } from "./app/lib/ratelimit";
+import { getCorsHeaders } from "./app/lib/cors";
 
 const publicRoutes = [
   "/api/auth/token",
@@ -26,6 +27,15 @@ const clientRoutes = ["/dashboard", "/api/organizations"];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const clientId = getClientIdentifier(request.headers);
+
+  // Handle CORS preflight for all API routes (external SaaS integrations)
+  if (request.method === "OPTIONS" && pathname.startsWith("/api")) {
+    const origin = request.headers.get("origin");
+    return new NextResponse(null, {
+      status: 204,
+      headers: getCorsHeaders(origin),
+    });
+  }
 
   // Apply rate limiting to auth endpoints
   if (pathname.startsWith("/api/auth/login")) {
@@ -138,13 +148,17 @@ export async function middleware(request: NextRequest) {
     // Apply rate limiting for API routes
     const rateLimitResult = await checkRateLimit(clientId, apiRateLimiter);
     if (!rateLimitResult.allowed) {
+      const rateLimitHeaders = getRateLimitHeaders(rateLimitResult);
+      const origin = request.headers.get("origin");
+      const corsHeaders = getCorsHeaders(origin);
+
       return NextResponse.json(
         {
           error: "Too many requests. Please try again later.",
         },
         {
           status: 429,
-          headers: getRateLimitHeaders(rateLimitResult),
+          headers: { ...rateLimitHeaders, ...corsHeaders },
         }
       );
     }
@@ -154,7 +168,16 @@ export async function middleware(request: NextRequest) {
       token = authHeader.split(" ")[1];
     }
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const origin = request.headers.get("origin");
+      const unauthorizedResponse = NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+      const corsHeaders = getCorsHeaders(origin);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        unauthorizedResponse.headers.set(key, value);
+      });
+      return unauthorizedResponse;
     }
     try {
       const tokenData = (await verifyToken(token)) as APIJWTPayload;
@@ -162,13 +185,30 @@ export async function middleware(request: NextRequest) {
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set("x-org-id", orgId);
       requestHeaders.set("x-client-id", clientId);
-      return NextResponse.next({
+
+      // Add CORS headers to the response
+      const origin = request.headers.get("origin");
+      const response = NextResponse.next({
         request: {
           headers: requestHeaders,
         },
       });
+      const corsHeaders = getCorsHeaders(origin);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+      return response;
     } catch {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const origin = request.headers.get("origin");
+      const unauthorizedResponse = NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+      const corsHeaders = getCorsHeaders(origin);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        unauthorizedResponse.headers.set(key, value);
+      });
+      return unauthorizedResponse;
     }
   }
 }
