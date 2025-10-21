@@ -20,13 +20,10 @@ const publicRoutes = [
   "/api/auth/register",
   "/api/auth/logout",
   "/api/auth/refresh",
-];
-
-const clientRoutes = [
-  "/dashboard",
-  "/api/organizations",
   "/api/auth/verify-email",
 ];
+
+const clientRoutes = ["/dashboard", "/api/organizations"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
