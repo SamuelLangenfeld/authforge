@@ -7,7 +7,6 @@ import {
   verifyToken,
 } from "@/app/lib/jwt";
 import { z } from "zod";
-import { handleCorsPreFlight, addCorsHeaders } from "@/app/lib/cors";
 
 const refreshSchema = z.object({
   refresh_token: z
@@ -17,16 +16,6 @@ const refreshSchema = z.object({
 });
 
 const invalidMessage = "Invalid or expired token";
-
-/**
- * OPTIONS /api/auth/refresh
- * Handle CORS preflight requests from external SaaS applications
- */
-export async function OPTIONS(req: NextRequest) {
-  const corsResponse = handleCorsPreFlight(req);
-  if (corsResponse) return corsResponse;
-  return new NextResponse(null, { status: 204 });
-}
 
 /**
  * POST /api/auth/refresh
@@ -58,7 +47,7 @@ export async function POST(req: NextRequest) {
         message: err.message,
       }));
 
-      const validationErrorResponse = NextResponse.json(
+      return NextResponse.json(
         {
           success: false,
           message: "Validation failed",
@@ -66,7 +55,6 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
-      return addCorsHeaders(validationErrorResponse, req);
     }
 
     // Use validated data (now type-safe!)
@@ -77,20 +65,18 @@ export async function POST(req: NextRequest) {
     try {
       payload = await verifyToken(refresh_token);
     } catch (e) {
-      const invalidTokenResponse = NextResponse.json(
+      return NextResponse.json(
         { error: invalidMessage },
         { status: 401 }
       );
-      return addCorsHeaders(invalidTokenResponse, req);
     }
 
     // Verify token type
     if (payload.type !== "refresh") {
-      const invalidTypeResponse = NextResponse.json(
+      return NextResponse.json(
         { error: "Invalid token type" },
         { status: 401 }
       );
-      return addCorsHeaders(invalidTypeResponse, req);
     }
 
     const clientId = payload.clientId as string;
@@ -105,11 +91,10 @@ export async function POST(req: NextRequest) {
 
     // Verify token exists in database
     if (!storedToken) {
-      const notFoundResponse = NextResponse.json(
+      return NextResponse.json(
         { error: invalidMessage },
         { status: 401 }
       );
-      return addCorsHeaders(notFoundResponse, req);
     }
 
     // Check database-level expiration
@@ -118,11 +103,10 @@ export async function POST(req: NextRequest) {
       await prisma.refreshToken.delete({
         where: { id: storedToken.id },
       });
-      const expiredResponse = NextResponse.json(
+      return NextResponse.json(
         { error: invalidMessage },
         { status: 401 }
       );
-      return addCorsHeaders(expiredResponse, req);
     }
 
     // Look up the API credential to get the orgId
@@ -131,11 +115,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (!apiCredential) {
-      const noCredentialResponse = NextResponse.json(
+      return NextResponse.json(
         { error: invalidMessage },
         { status: 401 }
       );
-      return addCorsHeaders(noCredentialResponse, req);
     }
 
     // Generate new tokens
@@ -158,20 +141,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       access_token: newAccessToken,
       refresh_token: newRefreshToken,
       token_type: "Bearer",
       expires_in: 3600, // 1 hour in seconds
     });
-
-    return addCorsHeaders(response, req);
   } catch (e: unknown) {
     const message = errorMessage(e);
-    const errorResponse = NextResponse.json(
+    return NextResponse.json(
       { error: message },
       { status: 500 }
     );
-    return addCorsHeaders(errorResponse, req);
   }
 }

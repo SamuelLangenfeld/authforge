@@ -6,7 +6,7 @@ import { randomBytes } from "crypto";
 import { z } from "zod";
 
 const resendSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
 });
 
 export async function POST(req: NextRequest) {
