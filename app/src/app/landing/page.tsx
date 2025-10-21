@@ -1,14 +1,23 @@
 "use client";
 import { useState } from "react";
 import { useAuth } from "@/app/lib/hooks/useAuth";
+import { useVerifiedMessage } from "@/app/lib/hooks/useVerifiedMessage";
 
-export default function Landing() {
+type LandingProps = {
+  verified?: boolean;
+};
+
+export default function Landing({ verified = false }: LandingProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [organization, setOrganization] = useState("");
   const [name, setName] = useState("");
   const [mode, setMode] = useState<"signin" | "register">("signin");
   const { login, register, error, loading } = useAuth();
+  const { VerifiedMessage } = useVerifiedMessage({
+    verified,
+    message: "Email verified successfully! You can now sign in.",
+  });
 
   const handleLogin: React.FormEventHandler = async (e) => {
     e.preventDefault();
@@ -54,6 +63,7 @@ export default function Landing() {
             Register
           </button>
         </div>
+        {VerifiedMessage}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
             {error}

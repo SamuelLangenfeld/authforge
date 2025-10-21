@@ -3,7 +3,11 @@ import { headers } from "next/headers";
 import prisma from "@/app/lib/db";
 import { userWithMembershipsSelect } from "@/app/lib/prisma-helpers";
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ verified?: string }>;
+}) {
   let user;
   try {
     const allheaders = await headers();
@@ -24,5 +28,8 @@ export default async function Dashboard() {
     );
   }
 
-  return <DashboardClient user={user} />;
+  const params = await searchParams;
+  const verified = params.verified === "true";
+
+  return <DashboardClient user={user} verified={verified} />;
 }

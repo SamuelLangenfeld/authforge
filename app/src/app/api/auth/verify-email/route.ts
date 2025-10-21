@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
 import errorMessage from "@/app/lib/errorMessage";
+import { verifyToken } from "@/app/lib/jwt";
+import env from "@/app/lib/env";
 
 export async function GET(req: NextRequest) {
   try {
@@ -67,10 +69,26 @@ export async function GET(req: NextRequest) {
       where: { id: verificationToken.id },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Email verified successfully",
-    });
+    // Check if user has a valid JWT token (logged in)
+    const jwtToken = req.cookies.get("jwt")?.value;
+    let isLoggedIn = false;
+
+    if (jwtToken) {
+      try {
+        await verifyToken(jwtToken);
+        isLoggedIn = true;
+      } catch {
+        // Invalid or expired token, treat as not logged in
+        isLoggedIn = false;
+      }
+    }
+
+    // Redirect based on authentication status
+    const redirectUrl = isLoggedIn
+      ? `${env.HOST_URL}/dashboard?verified=true`
+      : `${env.HOST_URL}/?verified=true`;
+
+    return NextResponse.redirect(redirectUrl);
   } catch (e: unknown) {
     const message = errorMessage(e);
     return NextResponse.json({ success: false, message }, { status: 500 });

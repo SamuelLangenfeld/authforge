@@ -1,8 +1,13 @@
 import "react";
 import Landing from "./landing/page";
-import Dashboard from "./dashboard/page";
 
-export default function Page() {
-  const isLoggedIn = false;
-  return <Landing />;
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ verified?: string }>;
+}) {
+  const params = await searchParams;
+  const verified = params.verified === "true";
+
+  return <Landing verified={verified} />;
 }
