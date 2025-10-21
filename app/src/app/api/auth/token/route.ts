@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app//lib/db";
-import errorMessage from "@/app/lib/errorMessage";
 import { generateBearerToken, generateRefreshToken } from "@/app/lib/jwt";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
 
 const tokenSchema = z.object({
   clientId: z
@@ -37,23 +37,8 @@ export async function POST(req: NextRequest) {
 
     // Validate input with Zod
     const validationResult = tokenSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      // Extract user-friendly error messages
-      const errors = validationResult.error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors,
-        },
-        { status: 400 }
-      );
-    }
+    const validationError = handleValidationError(validationResult);
+    if (validationError) return validationError;
 
     // Use validated data (now type-safe!)
     const { clientId, clientSecret } = validationResult.data;
@@ -72,10 +57,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (!apiCredential || !isValid) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return createErrorResponse("Invalid credentials", 401);
     }
 
     // Generate tokens
@@ -106,10 +88,6 @@ export async function POST(req: NextRequest) {
       expires_in: 3600, // 1 hour in seconds
     });
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return handleRouteError(e);
   }
 }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import prisma from "@/app/lib/db";
-import errorMessage from "@/app/lib/errorMessage";
 import { userSelectWithoutPassword } from "@/app/lib/prisma-helpers";
 import {
   validateApiAuth,
@@ -11,6 +10,7 @@ import {
   createUserSchema,
   listUsersQuerySchema,
 } from "@/app/lib/schemas";
+import { handleValidationError, handleQueryValidationError, handleRouteError, createErrorResponse, createConflictError, createSuccessResponse } from "@/app/lib/route-helpers";
 
 /**
  * GET /api/organizations/[orgId]/users
@@ -46,15 +46,8 @@ export async function GET(
       search: searchParams.get("search"),
     });
 
-    if (!queryResult.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid query parameters",
-          details: queryResult.error.flatten(),
-        },
-        { status: 400 }
-      );
-    }
+    const queryError = handleQueryValidationError(queryResult);
+    if (queryError) return queryError;
 
     const { skip, take, search } = queryResult.data;
 
@@ -98,27 +91,17 @@ export async function GET(
 
     const users = memberships.map((m) => m.user);
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          users,
-          pagination: {
-            skip,
-            take,
-            total,
-            pages: Math.ceil(total / take),
-          },
-        },
+    return createSuccessResponse({
+      users,
+      pagination: {
+        skip,
+        take,
+        total,
+        pages: Math.ceil(total / take),
       },
-      { status: 200 }
-    );
+    });
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json(
-      { error: "Internal server error", details: message },
-      { status: 500 }
-    );
+    return handleRouteError(e);
   }
 }
 
@@ -151,15 +134,8 @@ export async function POST(
     const body = await request.json();
     const validationResult = createUserSchema.safeParse(body);
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid request body",
-          details: validationResult.error.flatten(),
-        },
-        { status: 400 }
-      );
-    }
+    const validationError = handleValidationError(validationResult);
+    if (validationError) return validationError;
 
     const { email, name, password } = validationResult.data;
 
@@ -169,10 +145,7 @@ export async function POST(
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 409 }
-      );
+      return createConflictError("User with this email already exists");
     }
 
     // Check if user already exists in organization
@@ -184,10 +157,7 @@ export async function POST(
     });
 
     if (existingMembership) {
-      return NextResponse.json(
-        { error: "User already exists in this organization" },
-        { status: 409 }
-      );
+      return createConflictError("User already exists in this organization");
     }
 
     // Hash password
@@ -230,10 +200,6 @@ export async function POST(
       { status: 201 }
     );
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json(
-      { error: "Internal server error", details: message },
-      { status: 500 }
-    );
+    return handleRouteError(e);
   }
 }

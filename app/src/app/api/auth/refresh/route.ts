@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
-import errorMessage from "@/app/lib/errorMessage";
 import {
   generateBearerToken,
   generateRefreshToken,
   verifyToken,
 } from "@/app/lib/jwt";
 import { z } from "zod";
+import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
 
 const refreshSchema = z.object({
   refresh_token: z
@@ -39,23 +39,8 @@ export async function POST(req: NextRequest) {
 
     // Validate input with Zod
     const validationResult = refreshSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      // Extract user-friendly error messages
-      const errors = validationResult.error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors,
-        },
-        { status: 400 }
-      );
-    }
+    const validationError = handleValidationError(validationResult);
+    if (validationError) return validationError;
 
     // Use validated data (now type-safe!)
     const { refresh_token } = validationResult.data;
@@ -65,18 +50,12 @@ export async function POST(req: NextRequest) {
     try {
       payload = await verifyToken(refresh_token);
     } catch (e) {
-      return NextResponse.json(
-        { error: invalidMessage },
-        { status: 401 }
-      );
+      return createErrorResponse(invalidMessage, 401);
     }
 
     // Verify token type
     if (payload.type !== "refresh") {
-      return NextResponse.json(
-        { error: "Invalid token type" },
-        { status: 401 }
-      );
+      return createErrorResponse("Invalid token type", 401);
     }
 
     const clientId = payload.clientId as string;
@@ -91,10 +70,7 @@ export async function POST(req: NextRequest) {
 
     // Verify token exists in database
     if (!storedToken) {
-      return NextResponse.json(
-        { error: invalidMessage },
-        { status: 401 }
-      );
+      return createErrorResponse(invalidMessage, 401);
     }
 
     // Check database-level expiration
@@ -103,10 +79,7 @@ export async function POST(req: NextRequest) {
       await prisma.refreshToken.delete({
         where: { id: storedToken.id },
       });
-      return NextResponse.json(
-        { error: invalidMessage },
-        { status: 401 }
-      );
+      return createErrorResponse(invalidMessage, 401);
     }
 
     // Look up the API credential to get the orgId
@@ -115,10 +88,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!apiCredential) {
-      return NextResponse.json(
-        { error: invalidMessage },
-        { status: 401 }
-      );
+      return createErrorResponse(invalidMessage, 401);
     }
 
     // Generate new tokens
@@ -148,10 +118,6 @@ export async function POST(req: NextRequest) {
       expires_in: 3600, // 1 hour in seconds
     });
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return handleRouteError(e);
   }
 }

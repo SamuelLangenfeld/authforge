@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import prisma from "@/app/lib/db";
-import errorMessage from "@/app/lib/errorMessage";
 import { userSelectWithoutPassword } from "@/app/lib/prisma-helpers";
 import {
   validateApiAuth,
   getUserInOrg,
 } from "@/app/lib/auth-helpers";
 import { updateUserSchema } from "@/app/lib/schemas";
+import { handleValidationError, handleRouteError, createErrorResponse, createConflictError, createNotFoundError, createSuccessResponse } from "@/app/lib/route-helpers";
 
 /**
  * GET /api/organizations/[orgId]/users/[userId]
@@ -38,25 +38,12 @@ export async function GET(
     const user = await getUserInOrg(userId, orgId);
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found in this organization" },
-        { status: 404 }
-      );
+      return createNotFoundError("User not found in this organization");
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: user,
-      },
-      { status: 200 }
-    );
+    return createSuccessResponse(user);
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json(
-      { error: "Internal server error", details: message },
-      { status: 500 }
-    );
+    return handleRouteError(e);
   }
 }
 
@@ -88,25 +75,15 @@ export async function PATCH(
     // Verify user exists in organization
     const existingUser = await getUserInOrg(userId, orgId);
     if (!existingUser) {
-      return NextResponse.json(
-        { error: "User not found in this organization" },
-        { status: 404 }
-      );
+      return createNotFoundError("User not found in this organization");
     }
 
     // Parse and validate request body
     const body = await request.json();
     const validationResult = updateUserSchema.safeParse(body);
 
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid request body",
-          details: validationResult.error.flatten(),
-        },
-        { status: 400 }
-      );
-    }
+    const validationError = handleValidationError(validationResult);
+    if (validationError) return validationError;
 
     const { email, name, password } = validationResult.data;
 
@@ -118,10 +95,7 @@ export async function PATCH(
         where: { email },
       });
       if (otherUserWithEmail && otherUserWithEmail.id !== userId) {
-        return NextResponse.json(
-          { error: "Email is already in use" },
-          { status: 409 }
-        );
+        return createConflictError("Email is already in use");
       }
       updateData.email = email;
     }
@@ -150,11 +124,7 @@ export async function PATCH(
       { status: 200 }
     );
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json(
-      { error: "Internal server error", details: message },
-      { status: 500 }
-    );
+    return handleRouteError(e);
   }
 }
 
@@ -189,10 +159,7 @@ export async function DELETE(
     });
 
     if (!membership) {
-      return NextResponse.json(
-        { error: "User not found in this organization" },
-        { status: 404 }
-      );
+      return createNotFoundError("User not found in this organization");
     }
 
     // Delete the membership (this removes the user from the organization)
@@ -222,10 +189,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json(
-      { error: "Internal server error", details: message },
-      { status: 500 }
-    );
+    return handleRouteError(e);
   }
 }
