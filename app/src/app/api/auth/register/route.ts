@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { sendVerificationEmail } from "@/app/lib/email";
+import { userWithMembershipsSelect } from "@/app/lib/prisma-helpers";
 
 const registerSchema = z.object({
   email: z.email("Invalid email address"),
@@ -72,14 +73,7 @@ export async function POST(req: NextRequest) {
     });
     user = await prisma.user.findUnique({
       where: { id: user.id },
-      include: {
-        memberships: {
-          include: {
-            organization: true,
-            role: true,
-          },
-        },
-      },
+      select: userWithMembershipsSelect,
     });
 
     if (!user) {

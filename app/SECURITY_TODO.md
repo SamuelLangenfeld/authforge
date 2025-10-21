@@ -568,39 +568,29 @@ const updateMemberSchema = z.object({
 ---
 
 ### 12. Exclude Password Field from User Queries
-**Status:** Potential information leak
+**Status:** ✅ IMPLEMENTED
 **Risk:** Password hashes exposed in API responses
+**Files:** `src/app/lib/prisma-helpers.ts`, `src/app/api/auth/register/route.ts:8,76`, `src/app/dashboard/page.tsx:4,13`, `src/app/api/organizations/[orgId]/members/route.ts:4,55`
 
-**Check all queries that return User:**
-```typescript
-// Good - explicitly exclude password
-const user = await prisma.user.findUnique({
-  where: { id: user.id },
-  select: {
-    id: true,
-    name: true,
-    email: true,
-    // password deliberately omitted
-    memberships: {
-      include: {
-        organization: true,
-        role: true,
-      },
-    },
-  },
-});
-```
+**Implementation Details:**
 
-**Better - Create a helper:**
-```typescript
-// src/app/lib/prisma-helpers.ts
-export const userSelectWithoutPassword = {
-  id: true,
-  name: true,
-  email: true,
-  createdAt: true,
-} as const;
-```
+Created `src/app/lib/prisma-helpers.ts` with three helper selectors:
+
+1. **`userSelectWithoutPassword`** - Basic user fields without password
+   - `id`, `email`, `name`, `emailVerified`, `createdAt`
+
+2. **`userWithMembershipsSelect`** - User with memberships (for dashboard/profile)
+   - All basic fields plus memberships with organization and role
+
+3. **`userSelectForMemberList`** - Minimal fields for member lists
+   - `id`, `name`, `email`, `emailVerified`
+
+**Applied to:**
+- ✅ `/api/auth/register` - Uses `userWithMembershipsSelect`
+- ✅ `/dashboard/page.tsx` - Uses `userWithMembershipsSelect`
+- ✅ `/api/organizations/[orgId]/members` - Uses `userSelectForMemberList`
+
+All user queries now explicitly exclude password hashes from responses.
 
 ---
 
@@ -746,7 +736,7 @@ const nextConfig: NextConfig = {
 - [x] **CRITICAL #4:** `orgId` included in API Bearer tokens
 - [x] **CRITICAL #5:** Rate limiting on all auth endpoints
 - [x] **CRITICAL #6:** Database schema fixed (DateTime, indexes, cascades) - migration pending
-- [ ] HTTPS enforced in production
+- [x] HTTPS enforced in production
 - [ ] Environment variables secured (never committed)
 - [ ] Database backups configured
 - [x] Error messages don't leak sensitive info
@@ -757,7 +747,7 @@ const nextConfig: NextConfig = {
 - [x] Refresh token endpoint implemented with rotation
 - [x] CORS policy configured for API routes
 - [ ] Token cleanup cron job scheduled
-- [ ] Password fields excluded from API responses
+- [x] Password fields excluded from API responses
 - [x] Middleware redirect validation (HOST_URL format validated)
 - [ ] Monitoring/alerting set up
 - [ ] Incident response plan documented
@@ -798,6 +788,20 @@ const nextConfig: NextConfig = {
 ## 📝 Recent Changes Log
 
 ### 2025-10-20
+- ✅ **HTTPS ENFORCEMENT IMPLEMENTED:** Production HTTPS enforcement
+  - Added middleware redirect for HTTP → HTTPS in production (301 permanent redirect)
+  - Checks `x-forwarded-proto` header from reverse proxy/load balancer
+  - HSTS headers already configured in `next.config.ts` (max-age=1 year, includeSubDomains, preload)
+  - Created comprehensive `HTTPS_ENFORCEMENT.md` documentation
+  - Works automatically on Vercel, Netlify, Railway, and other platforms
+  - Compatible with Nginx, Caddy, Traefik reverse proxies
+- ✅ **MEDIUM #12 IMPLEMENTED:** Password field exclusion from API responses
+  - Created `src/app/lib/prisma-helpers.ts` with safe user selection helpers
+  - `userSelectWithoutPassword` - Basic user fields without password
+  - `userWithMembershipsSelect` - User with memberships for dashboard
+  - `userSelectForMemberList` - Minimal fields for member lists
+  - Applied to all routes that return user data
+  - Password hashes no longer exposed in any API responses
 - ✅ **MEDIUM #7 IMPLEMENTED:** CORS configuration for external SaaS API access
   - Created `src/app/lib/cors.ts` with CORS utilities
   - Added CORS handling to `/api/auth/token` and `/api/auth/refresh` routes

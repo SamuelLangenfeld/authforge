@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
 import errorMessage from "@/app/lib/errorMessage";
+import { userSelectForMemberList } from "@/app/lib/prisma-helpers";
 
 export async function GET(
   req: NextRequest,
@@ -51,11 +52,7 @@ export async function GET(
       },
       include: {
         user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+          select: userSelectForMemberList,
         },
         role: {
           select: {

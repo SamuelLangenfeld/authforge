@@ -28,6 +28,18 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const clientId = getClientIdentifier(request.headers);
 
+  // Enforce HTTPS in production
+  if (env.NODE_ENV === "production") {
+    const protocol = request.headers.get("x-forwarded-proto");
+
+    // If the request came through HTTP, redirect to HTTPS
+    if (protocol === "http") {
+      const url = request.nextUrl.clone();
+      url.protocol = "https:";
+      return NextResponse.redirect(url, { status: 301 });
+    }
+  }
+
   // Handle CORS preflight for all API routes (external SaaS integrations)
   if (request.method === "OPTIONS" && pathname.startsWith("/api")) {
     const origin = request.headers.get("origin");

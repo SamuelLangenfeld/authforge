@@ -1,6 +1,7 @@
 import DashboardClient from "./components/DashboardClient";
 import { headers } from "next/headers";
 import prisma from "@/app/lib/db";
+import { userWithMembershipsSelect } from "@/app/lib/prisma-helpers";
 
 export default async function Dashboard() {
   let user;
@@ -9,14 +10,7 @@ export default async function Dashboard() {
     const userId = allheaders.get("x-user-id") || "";
     user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        memberships: {
-          include: {
-            organization: true,
-            role: true,
-          },
-        },
-      },
+      select: userWithMembershipsSelect,
     });
   } catch (e) {
     console.log(e);
