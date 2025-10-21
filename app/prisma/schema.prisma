@@ -9,12 +9,14 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  name         String
-  password     String
-  memberships  Membership[]
-  createdAt    DateTime     @default(now())
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  name               String
+  password           String
+  emailVerified      DateTime?
+  memberships        Membership[]
+  verificationTokens VerificationToken[]
+  createdAt          DateTime            @default(now())
 
   @@index([email])
 }
@@ -69,4 +71,17 @@ model Membership {
   @@index([userId])
   @@index([orgId])
   @@index([roleId])
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
 }
