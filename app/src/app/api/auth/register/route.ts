@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
 import errorMessage from "@/app/lib/errorMessage";
-import { randomBytes } from "crypto";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { sendVerificationEmail } from "@/app/lib/email";
 import { userWithMembershipsSelect } from "@/app/lib/prisma-helpers";
+import { hashPassword } from "@/app/lib/crypto-helpers";
+import { generateApiCredentials, generateVerificationToken } from "@/app/lib/token-helpers";
+import { handleValidationError, handleRouteError } from "@/app/lib/route-helpers";
 
 const registerSchema = z.object({
   email: z.email("Invalid email address"),
@@ -25,27 +26,15 @@ export async function POST(req: NextRequest) {
 
     // Validate input with Zod
     const validationResult = registerSchema.safeParse(body);
-
-    if (!validationResult.success) {
-      // Extract user-friendly error messages
-      const errors = validationResult.error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors,
-        },
-        { status: 400 }
-      );
-    }
+    const validationError = handleValidationError(validationResult);
+    if (validationError) return validationError;
 
     // Use validated data (now type-safe!)
+    if (!validationResult.success) {
+      throw new Error("Validation should have been caught earlier");
+    }
     const { email, password, name, orgName } = validationResult.data;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hashPassword(password);
     user = await prisma.user.create({
       data: { email, password: hashedPassword, name },
     });
@@ -80,9 +69,9 @@ export async function POST(req: NextRequest) {
       throw new Error("Failed to retrieve user after creation");
     }
 
-    const apiKey = randomBytes(16).toString("hex"); // client_id
-    const apiSecret = randomBytes(32).toString("hex"); // client_secret
-    const encodedAPISecret = await bcrypt.hash(apiSecret, 10);
+    // Generate API credentials
+    const { clientId: apiKey, clientSecret: apiSecret } = generateApiCredentials();
+    const encodedAPISecret = await hashPassword(apiSecret);
     await prisma.apiCredential.create({
       data: {
         orgId: org.id,
@@ -93,9 +82,7 @@ export async function POST(req: NextRequest) {
     credentials = { clientId: apiKey, clientSecret: apiSecret };
 
     // Generate email verification token
-    const verificationToken = randomBytes(32).toString("hex");
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // Token expires in 24 hours
+    const { token: verificationToken, expiresAt } = generateVerificationToken();
 
     // Create verification token in database
     await prisma.verificationToken.create({
@@ -109,8 +96,7 @@ export async function POST(req: NextRequest) {
     // Send verification email
     await sendVerificationEmail(email, verificationToken);
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    return handleRouteError(e);
   }
   return NextResponse.json({
     success: true,

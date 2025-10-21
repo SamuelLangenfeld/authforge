@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hash } from "bcryptjs";
 import prisma from "@/app/lib/db";
 import { userSelectWithoutPassword } from "@/app/lib/prisma-helpers";
 import {
-  validateApiAuth,
+  validateOrgAccess,
   getUserInOrg,
 } from "@/app/lib/auth-helpers";
 import { updateUserSchema } from "@/app/lib/schemas";
-import { handleValidationError, handleRouteError, createErrorResponse, createConflictError, createNotFoundError, createSuccessResponse } from "@/app/lib/route-helpers";
+import { handleValidationError, handleRouteError, createConflictError, createNotFoundError, createSuccessResponse } from "@/app/lib/route-helpers";
+import { hashPassword } from "@/app/lib/crypto-helpers";
 
 /**
  * GET /api/organizations/[orgId]/users/[userId]
@@ -20,18 +20,10 @@ export async function GET(
   try {
     const { orgId, userId } = await context.params;
 
-    // Validate API authentication
-    const authValidation = await validateApiAuth(request);
+    // Validate organization access
+    const authValidation = await validateOrgAccess(request, orgId);
     if (!authValidation.valid) {
       return authValidation.response!;
-    }
-
-    // Ensure the organization ID matches
-    if (authValidation.authContext!.orgId !== orgId) {
-      return NextResponse.json(
-        { error: "Unauthorized - Cannot access other organizations" },
-        { status: 403 }
-      );
     }
 
     // Get user from organization
@@ -58,18 +50,10 @@ export async function PATCH(
   try {
     const { orgId, userId } = await context.params;
 
-    // Validate API authentication
-    const authValidation = await validateApiAuth(request);
+    // Validate organization access
+    const authValidation = await validateOrgAccess(request, orgId);
     if (!authValidation.valid) {
       return authValidation.response!;
-    }
-
-    // Ensure the organization ID matches
-    if (authValidation.authContext!.orgId !== orgId) {
-      return NextResponse.json(
-        { error: "Unauthorized - Cannot access other organizations" },
-        { status: 403 }
-      );
     }
 
     // Verify user exists in organization
@@ -85,6 +69,9 @@ export async function PATCH(
     const validationError = handleValidationError(validationResult);
     if (validationError) return validationError;
 
+    if (!validationResult.success) {
+      throw new Error("Validation should have been caught earlier");
+    }
     const { email, name, password } = validationResult.data;
 
     // Build update data
@@ -105,7 +92,7 @@ export async function PATCH(
     }
 
     if (password !== undefined) {
-      updateData.password = await hash(password, 10);
+      updateData.password = await hashPassword(password);
     }
 
     // Update user
@@ -139,18 +126,10 @@ export async function DELETE(
   try {
     const { orgId, userId } = await context.params;
 
-    // Validate API authentication
-    const authValidation = await validateApiAuth(request);
+    // Validate organization access
+    const authValidation = await validateOrgAccess(request, orgId);
     if (!authValidation.valid) {
       return authValidation.response!;
-    }
-
-    // Ensure the organization ID matches
-    if (authValidation.authContext!.orgId !== orgId) {
-      return NextResponse.json(
-        { error: "Unauthorized - Cannot access other organizations" },
-        { status: 403 }
-      );
     }
 
     // Verify user exists in organization

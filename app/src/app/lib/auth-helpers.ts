@@ -123,3 +123,35 @@ export async function getUserInOrg(userId: string, orgId: string) {
 
   return membership?.user || null;
 }
+
+/**
+ * Validates organization access for API requests
+ * Combines API auth validation with org ID matching in one helper
+ * Eliminates repeated pattern across organization routes
+ */
+export async function validateOrgAccess(
+  request: NextRequest,
+  orgId: string
+) {
+  const authValidation = await validateApiAuth(request);
+
+  if (!authValidation.valid) {
+    return { valid: false, response: authValidation.response };
+  }
+
+  // Ensure the organization ID matches the authenticated org
+  if (authValidation.authContext!.orgId !== orgId) {
+    return {
+      valid: false,
+      response: NextResponse.json(
+        { error: "Unauthorized - Cannot access other organizations" },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return {
+    valid: true,
+    authContext: authValidation.authContext,
+  };
+}

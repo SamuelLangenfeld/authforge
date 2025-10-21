@@ -7,6 +7,7 @@ import {
 } from "@/app/lib/jwt";
 import { z } from "zod";
 import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
+import { getRefreshTokenExpiration } from "@/app/lib/token-helpers";
 
 const refreshSchema = z.object({
   refresh_token: z
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
       data: {
         token: newRefreshToken,
         clientId,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        expiresAt: getRefreshTokenExpiration(),
       },
     });
 

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
-import errorMessage from "@/app/lib/errorMessage";
 import { sendVerificationEmail } from "@/app/lib/email";
-import { randomBytes } from "crypto";
 import { z } from "zod";
+import { handleValidationError, handleRouteError } from "@/app/lib/route-helpers";
+import { generateVerificationToken } from "@/app/lib/token-helpers";
 
 const resendSchema = z.object({
   email: z.email("Invalid email address"),
@@ -15,23 +15,12 @@ export async function POST(req: NextRequest) {
 
     // Validate input
     const validationResult = resendSchema.safeParse(body);
+    const validationError = handleValidationError(validationResult);
+    if (validationError) return validationError;
 
     if (!validationResult.success) {
-      const errors = validationResult.error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors,
-        },
-        { status: 400 }
-      );
+      throw new Error("Validation should have been caught earlier");
     }
-
     const { email } = validationResult.data;
 
     // Find user by email
@@ -65,9 +54,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Generate new verification token
-    const token = randomBytes(32).toString("hex");
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // Token expires in 24 hours
+    const { token, expiresAt } = generateVerificationToken();
 
     // Create new verification token
     await prisma.verificationToken.create({
@@ -86,7 +73,6 @@ export async function POST(req: NextRequest) {
       message: "Verification email sent successfully",
     });
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    return handleRouteError(e);
   }
 }

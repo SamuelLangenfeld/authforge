@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app//lib/db";
 import { generateBearerToken, generateRefreshToken } from "@/app/lib/jwt";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
+import { comparePassword, DUMMY_PASSWORD_HASH } from "@/app/lib/crypto-helpers";
+import { getRefreshTokenExpiration } from "@/app/lib/token-helpers";
 
 const tokenSchema = z.object({
   clientId: z
@@ -50,10 +51,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const isValid = await bcrypt.compare(
+    const isValid = await comparePassword(
       clientSecret,
-      apiCredential?.clientSecret ||
-        "$2a$10$dummyhashtopreventtimingattack00000000000000000000000000"
+      apiCredential?.clientSecret || DUMMY_PASSWORD_HASH
     );
 
     if (!apiCredential || !isValid) {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       data: {
         token: refreshToken,
         clientId,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        expiresAt: getRefreshTokenExpiration(),
       },
     });
 
