@@ -22,7 +22,11 @@ const publicRoutes = [
   "/api/auth/refresh",
 ];
 
-const clientRoutes = ["/dashboard", "/api/organizations"];
+const clientRoutes = [
+  "/dashboard",
+  "/api/organizations",
+  "/api/auth/verify-email",
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
