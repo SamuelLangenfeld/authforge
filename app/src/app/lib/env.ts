@@ -7,7 +7,7 @@
 const nodeEnv = process.env.NODE_ENV || "development";
 
 // Required environment variables that are always needed
-const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL", "HOST_URL", "RESEND_API_KEY", "FROM_EMAIL"] as const;
+const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL", "HOST_URL", "MAILERSEND_API_KEY", "FROM_EMAIL"] as const;
 
 // Validate all required environment variables exist
 requiredEnvVars.forEach((variable) => {
@@ -32,7 +32,7 @@ const env = {
   JWT_SECRET: process.env.JWT_SECRET!,
   DATABASE_URL: process.env.DATABASE_URL!,
   HOST_URL: hostUrl,
-  RESEND_API_KEY: process.env.RESEND_API_KEY!,
+  MAILERSEND_API_KEY: process.env.MAILERSEND_API_KEY!,
   FROM_EMAIL: process.env.FROM_EMAIL!,
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || "",
   NODE_ENV: nodeEnv,

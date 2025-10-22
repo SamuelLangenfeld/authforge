@@ -1,12 +1,14 @@
 /**
- * Email service using Resend
+ * Email service using MailerSend
  * Handles sending verification emails and other transactional emails
  */
 
-import { Resend } from "resend";
+import { MailerSend, EmailParams, Recipient } from "mailersend";
 import env from "./env";
 
-const resend = new Resend(env.RESEND_API_KEY);
+const mailersend = new MailerSend({
+  apiKey: env.MAILERSEND_API_KEY,
+});
 
 export async function sendVerificationEmail(
   email: string,
@@ -15,11 +17,16 @@ export async function sendVerificationEmail(
   const verificationUrl = `${env.HOST_URL}/api/auth/verify-email?token=${verificationToken}`;
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: env.FROM_EMAIL,
-      to: email,
-      subject: "Verify your email address",
-      html: `
+    const params = new EmailParams()
+      .setFrom({
+        email: env.FROM_EMAIL,
+        name: "AuthForge",
+      })
+      .setTo([
+        new Recipient(email),
+      ])
+      .setSubject("Verify your email address")
+      .setHtml(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -51,15 +58,10 @@ export async function sendVerificationEmail(
             </div>
           </body>
         </html>
-      `,
-    });
+      `);
 
-    if (error) {
-      console.error("Error sending verification email:", error);
-      throw new Error("Failed to send verification email");
-    }
-
-    return data;
+    await mailersend.email.send(params);
+    return { success: true };
   } catch (error) {
     console.error("Error sending verification email:", error);
     throw error;
@@ -73,11 +75,16 @@ export async function sendPasswordResetEmail(
   const resetUrl = `${env.HOST_URL}/reset-password?token=${resetToken}`;
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: env.FROM_EMAIL,
-      to: email,
-      subject: "Reset your password",
-      html: `
+    const params = new EmailParams()
+      .setFrom({
+        email: env.FROM_EMAIL,
+        name: "AuthForge",
+      })
+      .setTo([
+        new Recipient(email),
+      ])
+      .setSubject("Reset your password")
+      .setHtml(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -109,15 +116,10 @@ export async function sendPasswordResetEmail(
             </div>
           </body>
         </html>
-      `,
-    });
+      `);
 
-    if (error) {
-      console.error("Error sending password reset email:", error);
-      throw new Error("Failed to send password reset email");
-    }
-
-    return data;
+    await mailersend.email.send(params);
+    return { success: true };
   } catch (error) {
     console.error("Error sending password reset email:", error);
     throw error;
@@ -132,11 +134,16 @@ export async function sendInvitationEmail(
   const acceptUrl = `${env.HOST_URL}/accept-invitation?token=${invitationToken}`;
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: env.FROM_EMAIL,
-      to: email,
-      subject: `You're invited to join ${organizationName}`,
-      html: `
+    const params = new EmailParams()
+      .setFrom({
+        email: env.FROM_EMAIL,
+        name: "AuthForge",
+      })
+      .setTo([
+        new Recipient(email),
+      ])
+      .setSubject(`You're invited to join ${organizationName}`)
+      .setHtml(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -169,15 +176,10 @@ export async function sendInvitationEmail(
             </div>
           </body>
         </html>
-      `,
-    });
+      `);
 
-    if (error) {
-      console.error("Error sending invitation email:", error);
-      throw new Error("Failed to send invitation email");
-    }
-
-    return data;
+    await mailersend.email.send(params);
+    return { success: true };
   } catch (error) {
     console.error("Error sending invitation email:", error);
     throw error;
