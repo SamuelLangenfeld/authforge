@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
 import { sendVerificationEmail } from "@/app/lib/email";
 import { userWithMembershipsSelect } from "@/app/lib/prisma-helpers";
 import { hashPassword } from "@/app/lib/crypto-helpers";
 import { generateApiCredentials, generateVerificationToken } from "@/app/lib/token-helpers";
-import { handleValidationError, handleRouteError } from "@/app/lib/route-helpers";
+import { handleValidationError, handleRouteError, createSuccessMessageResponse } from "@/app/lib/route-helpers";
 import { registerSchema } from "@/app/lib/schemas";
 
 export async function POST(req: NextRequest) {
@@ -87,10 +87,9 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     return handleRouteError(e);
   }
-  return NextResponse.json({
-    success: true,
-    data: { user, credentials },
-    message:
-      "Registration successful! Please check your email to verify your account.",
-  });
+  return createSuccessMessageResponse(
+    "Registration successful! Please check your email to verify your account.",
+    { user, credentials },
+    201
+  );
 }

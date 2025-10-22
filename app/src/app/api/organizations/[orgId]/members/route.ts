@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
-import errorMessage from "@/app/lib/errorMessage";
 import { userSelectForMemberList } from "@/app/lib/prisma-helpers";
+import { createErrorResponse, handleRouteError, createSuccessResponse } from "@/app/lib/route-helpers";
 
 export async function GET(
   req: NextRequest,
@@ -14,10 +14,7 @@ export async function GET(
     const userId = req.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
+      return createErrorResponse("Unauthorized", 401);
     }
 
     // Check if the user is a member of this organization and has admin role
@@ -32,17 +29,11 @@ export async function GET(
     });
 
     if (!membership) {
-      return NextResponse.json(
-        { success: false, message: "Not a member of this organization" },
-        { status: 403 }
-      );
+      return createErrorResponse("Not a member of this organization", 403);
     }
 
     if (membership.role.name !== "admin") {
-      return NextResponse.json(
-        { success: false, message: "Admin access required" },
-        { status: 403 }
-      );
+      return createErrorResponse("Admin access required", 403);
     }
 
     // Fetch all members of the organization
@@ -68,12 +59,8 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      members,
-    });
+    return createSuccessResponse({ members });
   } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    return handleRouteError(e);
   }
 }

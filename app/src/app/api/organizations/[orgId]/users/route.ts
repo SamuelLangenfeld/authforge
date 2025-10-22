@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
 import { userSelectWithoutPassword } from "@/app/lib/prisma-helpers";
 import {
@@ -9,7 +9,7 @@ import {
   createUserSchema,
   listUsersQuerySchema,
 } from "@/app/lib/schemas";
-import { handleValidationError, handleQueryValidationError, handleRouteError, createConflictError, createSuccessResponse } from "@/app/lib/route-helpers";
+import { handleValidationError, handleQueryValidationError, handleRouteError, createConflictError, createSuccessResponse, createSuccessMessageResponse } from "@/app/lib/route-helpers";
 import { hashPassword } from "@/app/lib/crypto-helpers";
 
 /**
@@ -181,14 +181,7 @@ export async function POST(
       select: userSelectWithoutPassword,
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: newUser,
-        message: "User created successfully",
-      },
-      { status: 201 }
-    );
+    return createSuccessMessageResponse("User created successfully", newUser, 201);
   } catch (e: unknown) {
     return handleRouteError(e);
   }

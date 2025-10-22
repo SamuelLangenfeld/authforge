@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { verifyToken } from "@/app/lib/jwt";
+import { validateTokenExpiration } from "@/app/lib/auth-helpers";
 import env from "@/app/lib/env";
 
 export async function GET(req: NextRequest) {
@@ -22,34 +23,25 @@ export async function GET(req: NextRequest) {
       include: { user: true },
     });
 
-    if (!verificationToken) {
-      return NextResponse.json(
-        { success: false, message: "Invalid or expired verification token" },
-        { status: 400 }
-      );
-    }
+    // Validate token exists and hasn't expired
+    const tokenError = await validateTokenExpiration(
+      verificationToken,
+      async (t) => {
+        await prisma.verificationToken.delete({ where: { id: t.id } });
+      },
+      "Invalid or expired verification token",
+      400
+    );
+    if (tokenError) return tokenError;
 
-    // Check if token has expired
-    if (verificationToken.expiresAt < new Date()) {
-      // Delete the expired token
-      await prisma.verificationToken.delete({
-        where: { id: verificationToken.id },
-      });
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Verification token has expired. Please request a new one.",
-        },
-        { status: 400 }
-      );
-    }
+    // At this point, verificationToken is guaranteed to be non-null
+    const validToken = verificationToken!;
 
     // Check if email is already verified
-    if (verificationToken.user.emailVerified) {
+    if (validToken.user.emailVerified) {
       // Delete the token since email is already verified
       await prisma.verificationToken.delete({
-        where: { id: verificationToken.id },
+        where: { id: validToken.id },
       });
 
       return NextResponse.json(
@@ -60,13 +52,13 @@ export async function GET(req: NextRequest) {
 
     // Update user's emailVerified field
     await prisma.user.update({
-      where: { id: verificationToken.userId },
+      where: { id: validToken.userId },
       data: { emailVerified: new Date() },
     });
 
     // Delete the verification token after successful verification
     await prisma.verificationToken.delete({
-      where: { id: verificationToken.id },
+      where: { id: validToken.id },
     });
 
     // Check if user has a valid JWT token (logged in)

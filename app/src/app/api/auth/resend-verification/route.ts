@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
 import { sendVerificationEmail } from "@/app/lib/email";
-import { handleValidationError, handleRouteError } from "@/app/lib/route-helpers";
+import { handleValidationError, handleRouteError, createSuccessMessageResponse, createErrorResponse } from "@/app/lib/route-helpers";
 import { generateVerificationToken } from "@/app/lib/token-helpers";
 import { resendVerificationSchema } from "@/app/lib/schemas";
 
@@ -26,22 +26,14 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       // Don't reveal if user exists or not for security
-      return NextResponse.json(
-        {
-          success: true,
-          message:
-            "If an account with that email exists and is not verified, a verification email will be sent.",
-        },
-        { status: 200 }
+      return createSuccessMessageResponse(
+        "If an account with that email exists and is not verified, a verification email will be sent."
       );
     }
 
     // Check if email is already verified
     if (user.emailVerified) {
-      return NextResponse.json(
-        { success: false, message: "Email is already verified" },
-        { status: 400 }
-      );
+      return createErrorResponse("Email is already verified", 400);
     }
 
     // Delete any existing verification tokens for this user
@@ -64,10 +56,7 @@ export async function POST(req: NextRequest) {
     // Send verification email
     await sendVerificationEmail(user.email, token);
 
-    return NextResponse.json({
-      success: true,
-      message: "Verification email sent successfully",
-    });
+    return createSuccessMessageResponse("Verification email sent successfully");
   } catch (e: unknown) {
     return handleRouteError(e);
   }

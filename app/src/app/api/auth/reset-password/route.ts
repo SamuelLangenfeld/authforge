@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
-import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
+import { handleValidationError, handleRouteError, createErrorResponse, createSuccessMessageResponse } from "@/app/lib/route-helpers";
 import { hashPassword } from "@/app/lib/crypto-helpers";
+import { validateTokenExpiration } from "@/app/lib/auth-helpers";
 import { resetPasswordSchema } from "@/app/lib/schemas";
 
 const invalidMessage = "Invalid or expired reset token";
@@ -43,19 +44,16 @@ export async function POST(req: NextRequest) {
       where: { token },
     });
 
-    // Verify token exists in database
-    if (!resetToken) {
-      return createErrorResponse(invalidMessage, 400);
-    }
-
-    // Check if token has expired
-    if (resetToken.expiresAt < new Date()) {
-      // Clean up expired token
-      await prisma.passwordResetToken.delete({
-        where: { id: resetToken.id },
-      });
-      return createErrorResponse(invalidMessage, 400);
-    }
+    // Validate token exists and hasn't expired
+    const tokenError = await validateTokenExpiration(
+      resetToken,
+      async (t) => {
+        await prisma.passwordResetToken.delete({ where: { id: t.id } });
+      },
+      invalidMessage,
+      400
+    );
+    if (tokenError) return tokenError;
 
     // Find the user
     const user = await prisma.user.findUnique({
@@ -80,10 +78,7 @@ export async function POST(req: NextRequest) {
       where: { id: resetToken.id },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Password has been reset successfully",
-    });
+    return createSuccessMessageResponse("Password has been reset successfully");
   } catch (e: unknown) {
     return handleRouteError(e);
   }

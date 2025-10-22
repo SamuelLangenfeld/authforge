@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
 import errorMessage from "@/app/lib/errorMessage";
 import { generateToken } from "@/app/lib/jwt";
+import { setJwtCookie } from "@/app/lib/cookie-helpers";
 import bcrypt from "bcryptjs";
-import env from "@/app/lib/env";
 import { loginSchema } from "@/app/lib/schemas";
 
 const getCredentialError = () => {
@@ -60,13 +60,7 @@ export async function POST(req: NextRequest) {
       success: true,
     });
 
-    response.cookies.set("jwt", token, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 60 * 60,
-    });
+    setJwtCookie(response, token);
 
     return response;
   } catch (e: unknown) {

@@ -5,6 +5,7 @@ import {
   handleValidationError,
   handleRouteError,
   createErrorResponse,
+  createSuccessMessageResponse,
 } from "@/app/lib/route-helpers";
 import { generateInvitationToken } from "@/app/lib/token-helpers";
 import { sendInvitationSchema } from "@/app/lib/schemas";
@@ -42,8 +43,8 @@ export async function POST(
 
     // Validate user is admin of this organization
     const adminCheck = await validateOrgAccess(req, orgId);
-    if (adminCheck.error) {
-      return adminCheck.response;
+    if (!adminCheck.valid) {
+      return adminCheck.response!;
     }
 
     const body = await req.json();
@@ -130,10 +131,7 @@ export async function POST(
     // Send invitation email
     await sendInvitationEmail(email, organization.name, token);
 
-    return NextResponse.json({
-      success: true,
-      message: "Invitation sent successfully",
-    });
+    return createSuccessMessageResponse("Invitation sent successfully");
   } catch (e: unknown) {
     return handleRouteError(e);
   }

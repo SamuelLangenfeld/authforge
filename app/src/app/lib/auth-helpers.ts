@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "./db";
+import { createErrorResponse } from "./route-helpers";
 
 /**
  * Authentication helpers for API endpoints
@@ -154,4 +155,43 @@ export async function validateOrgAccess(
     valid: true,
     authContext: authValidation.authContext,
   };
+}
+
+/**
+ * Validates and cleans up expired tokens
+ * Handles the common pattern of checking token expiration, deleting if expired,
+ * and returning an error response
+ *
+ * @param token - The token object with expiresAt property
+ * @param deleteToken - Async function that deletes the token from database
+ * @param errorMessage - Message to return if token is expired
+ * @param statusCode - HTTP status code (default 400)
+ * @returns NextResponse if token is expired, null if token is valid and not expired
+ */
+export async function validateTokenExpiration<
+  T extends { expiresAt: Date; id?: string }
+>(
+  token: T | null,
+  deleteToken: (token: T) => Promise<void>,
+  errorMessage: string,
+  statusCode: number = 400
+): Promise<NextResponse | null> {
+  // Token doesn't exist
+  if (!token) {
+    return createErrorResponse(errorMessage, statusCode);
+  }
+
+  // Token has expired
+  if (token.expiresAt < new Date()) {
+    // Clean up the expired token
+    try {
+      await deleteToken(token);
+    } catch (error) {
+      console.error("Error deleting expired token:", error);
+    }
+    return createErrorResponse(errorMessage, statusCode);
+  }
+
+  // Token is valid
+  return null;
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
 import { userSelectWithoutPassword } from "@/app/lib/prisma-helpers";
 import {
@@ -6,7 +6,7 @@ import {
   getUserInOrg,
 } from "@/app/lib/auth-helpers";
 import { updateUserSchema } from "@/app/lib/schemas";
-import { handleValidationError, handleRouteError, createConflictError, createNotFoundError, createSuccessResponse } from "@/app/lib/route-helpers";
+import { handleValidationError, handleRouteError, createConflictError, createNotFoundError, createSuccessResponse, createSuccessMessageResponse } from "@/app/lib/route-helpers";
 import { hashPassword } from "@/app/lib/crypto-helpers";
 
 /**
@@ -102,14 +102,7 @@ export async function PATCH(
       select: userSelectWithoutPassword,
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: updatedUser,
-        message: "User updated successfully",
-      },
-      { status: 200 }
-    );
+    return createSuccessMessageResponse("User updated successfully", updatedUser);
   } catch (e: unknown) {
     return handleRouteError(e);
   }

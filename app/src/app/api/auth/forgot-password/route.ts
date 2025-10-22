@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
 import { sendPasswordResetEmail } from "@/app/lib/email";
-import { handleValidationError, handleRouteError } from "@/app/lib/route-helpers";
+import { handleValidationError, handleRouteError, createSuccessMessageResponse } from "@/app/lib/route-helpers";
 import { generateVerificationToken } from "@/app/lib/token-helpers";
 import { forgotPasswordSchema } from "@/app/lib/schemas";
 
@@ -43,13 +43,8 @@ export async function POST(req: NextRequest) {
 
     // Don't reveal if user exists or not for security
     if (!user) {
-      return NextResponse.json(
-        {
-          success: true,
-          message:
-            "If an account with that email exists, a password reset email will be sent.",
-        },
-        { status: 200 }
+      return createSuccessMessageResponse(
+        "If an account with that email exists, a password reset email will be sent."
       );
     }
 
@@ -73,11 +68,9 @@ export async function POST(req: NextRequest) {
     // Send password reset email
     await sendPasswordResetEmail(user.email, token);
 
-    return NextResponse.json({
-      success: true,
-      message:
-        "If an account with that email exists, a password reset email will be sent.",
-    });
+    return createSuccessMessageResponse(
+      "If an account with that email exists, a password reset email will be sent."
+    );
   } catch (e: unknown) {
     return handleRouteError(e);
   }

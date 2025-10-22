@@ -1,20 +1,11 @@
-import { NextResponse } from "next/server";
-import env from "@/app/lib/env";
+import { clearJwtCookie } from "@/app/lib/cookie-helpers";
+import { createSuccessMessageResponse } from "@/app/lib/route-helpers";
 
 export async function POST() {
-  const response = NextResponse.json({
-    success: true,
-    message: "Logged out successfully",
-  });
+  const response = createSuccessMessageResponse("Logged out successfully");
 
   // Clear the JWT cookie
-  response.cookies.set("jwt", "", {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: 0, // Expire immediately
-  });
+  clearJwtCookie(response);
 
   return response;
 }

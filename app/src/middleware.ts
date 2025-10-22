@@ -9,7 +9,7 @@ import {
   checkRateLimit,
   getRateLimitHeaders,
 } from "./app/lib/ratelimit";
-import { getCorsHeaders } from "./app/lib/cors";
+import { getCorsHeaders, addCorsHeaders } from "./app/lib/cors";
 
 const publicRoutes = [
   "/api/auth/token",
@@ -123,16 +123,11 @@ export async function middleware(request: NextRequest) {
       token = authHeader.split(" ")[1];
     }
     if (!token) {
-      const origin = request.headers.get("origin");
       const unauthorizedResponse = NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
-      const corsHeaders = getCorsHeaders(origin);
-      Object.entries(corsHeaders).forEach(([key, value]) => {
-        unauthorizedResponse.headers.set(key, value);
-      });
-      return unauthorizedResponse;
+      return addCorsHeaders(unauthorizedResponse, request);
     }
     try {
       const tokenData = (await verifyToken(token)) as APIJWTPayload;
@@ -142,28 +137,18 @@ export async function middleware(request: NextRequest) {
       requestHeaders.set("x-client-id", clientId);
 
       // Add CORS headers to the response
-      const origin = request.headers.get("origin");
       const response = NextResponse.next({
         request: {
           headers: requestHeaders,
         },
       });
-      const corsHeaders = getCorsHeaders(origin);
-      Object.entries(corsHeaders).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
-      return response;
+      return addCorsHeaders(response, request);
     } catch {
-      const origin = request.headers.get("origin");
       const unauthorizedResponse = NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
-      const corsHeaders = getCorsHeaders(origin);
-      Object.entries(corsHeaders).forEach(([key, value]) => {
-        unauthorizedResponse.headers.set(key, value);
-      });
-      return unauthorizedResponse;
+      return addCorsHeaders(unauthorizedResponse, request);
     }
   }
 }

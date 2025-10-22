@@ -1,11 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
 import { hashPassword } from "@/app/lib/crypto-helpers";
 import {
   handleValidationError,
   handleRouteError,
   createErrorResponse,
+  createSuccessMessageResponse,
 } from "@/app/lib/route-helpers";
+import { validateTokenExpiration } from "@/app/lib/auth-helpers";
 import { acceptInvitationSchema } from "@/app/lib/schemas";
 
 const invalidMessage = "Invalid or expired invitation token";
@@ -48,22 +50,23 @@ export async function POST(req: NextRequest) {
       include: { organization: true },
     });
 
-    if (!invitation) {
-      return createErrorResponse(invalidMessage, 400);
-    }
+    // Validate invitation exists and hasn't expired
+    const invitationError = await validateTokenExpiration(
+      invitation,
+      async (inv) => {
+        await prisma.invitation.delete({ where: { id: inv.id } });
+      },
+      invalidMessage,
+      400
+    );
+    if (invitationError) return invitationError;
 
-    // Check if invitation has expired
-    if (invitation.expiresAt < new Date()) {
-      // Clean up expired invitation
-      await prisma.invitation.delete({
-        where: { id: invitation.id },
-      });
-      return createErrorResponse(invalidMessage, 400);
-    }
+    // At this point, invitation is guaranteed to be non-null
+    const validInvitation = invitation!;
 
     // Find or create user
     let user = await prisma.user.findUnique({
-      where: { email: invitation.email },
+      where: { email: validInvitation.email },
     });
 
     if (!user) {
@@ -91,31 +94,30 @@ export async function POST(req: NextRequest) {
     const existingMembership = await prisma.membership.findFirst({
       where: {
         userId: user.id,
-        orgId: invitation.orgId,
+        orgId: validInvitation.orgId,
       },
     });
 
     if (existingMembership) {
       // Delete invitation and return success (user already a member)
       await prisma.invitation.delete({
-        where: { id: invitation.id },
+        where: { id: validInvitation.id },
       });
 
-      return NextResponse.json({
-        success: true,
-        message: "User is already a member of this organization",
-        data: {
+      return createSuccessMessageResponse(
+        "User is already a member of this organization",
+        {
           user: {
             id: user.id,
             email: user.email,
             name: user.name,
           },
           organization: {
-            id: invitation.organization.id,
-            name: invitation.organization.name,
+            id: validInvitation.organization.id,
+            name: validInvitation.organization.name,
           },
-        },
-      });
+        }
+      );
     }
 
     // Get the "user" role (non-admin)
@@ -131,31 +133,30 @@ export async function POST(req: NextRequest) {
     await prisma.membership.create({
       data: {
         userId: user.id,
-        orgId: invitation.orgId,
+        orgId: validInvitation.orgId,
         roleId: userRole.id,
       },
     });
 
     // Delete the used invitation
     await prisma.invitation.delete({
-      where: { id: invitation.id },
+      where: { id: validInvitation.id },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Successfully joined organization",
-      data: {
+    return createSuccessMessageResponse(
+      "Successfully joined organization",
+      {
         user: {
           id: user.id,
           email: user.email,
           name: user.name,
         },
         organization: {
-          id: invitation.organization.id,
-          name: invitation.organization.name,
+          id: validInvitation.organization.id,
+          name: validInvitation.organization.name,
         },
-      },
-    });
+      }
+    );
   } catch (e: unknown) {
     return handleRouteError(e);
   }

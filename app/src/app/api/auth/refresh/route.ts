@@ -6,6 +6,7 @@ import {
   verifyToken,
 } from "@/app/lib/jwt";
 import { handleValidationError, handleRouteError, createErrorResponse } from "@/app/lib/route-helpers";
+import { validateTokenExpiration } from "@/app/lib/auth-helpers";
 import { getRefreshTokenExpiration } from "@/app/lib/token-helpers";
 import { refreshSchema } from "@/app/lib/schemas";
 
@@ -65,19 +66,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Verify token exists in database
-    if (!storedToken) {
-      return createErrorResponse(invalidMessage, 401);
-    }
+    // Validate token exists and hasn't expired
+    const tokenError = await validateTokenExpiration(
+      storedToken,
+      async (t) => {
+        await prisma.refreshToken.delete({ where: { id: t.id } });
+      },
+      invalidMessage,
+      401
+    );
+    if (tokenError) return tokenError;
 
-    // Check database-level expiration
-    if (storedToken.expiresAt < new Date()) {
-      // Clean up expired token
-      await prisma.refreshToken.delete({
-        where: { id: storedToken.id },
-      });
-      return createErrorResponse(invalidMessage, 401);
-    }
+    // At this point, storedToken is guaranteed to be non-null
+    const refreshToken = storedToken!;
 
     // Look up the API credential to get the orgId
     const apiCredential = await prisma.apiCredential.findUnique({
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     // Rotate refresh token: delete old token and store new one
     await prisma.refreshToken.delete({
-      where: { id: storedToken.id },
+      where: { id: refreshToken.id },
     });
 
     await prisma.refreshToken.create({
