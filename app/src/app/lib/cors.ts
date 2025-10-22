@@ -36,26 +36,6 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
 }
 
 /**
- * Handle CORS preflight requests
- * Returns a response for OPTIONS requests, or null for other methods
- */
-export function handleCorsPreFlight(
-  request: NextRequest
-): NextResponse | null {
-  const origin = request.headers.get("origin");
-
-  // Handle preflight OPTIONS request
-  if (request.method === "OPTIONS") {
-    return new NextResponse(null, {
-      status: 204,
-      headers: getCorsHeaders(origin),
-    });
-  }
-
-  return null;
-}
-
-/**
  * Add CORS headers to an existing response
  */
 export function addCorsHeaders(

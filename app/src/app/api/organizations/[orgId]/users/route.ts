@@ -3,7 +3,6 @@ import prisma from "@/app/lib/db";
 import { userSelectWithoutPassword } from "@/app/lib/prisma-helpers";
 import {
   validateOrgAccess,
-  userExistsInOrg,
 } from "@/app/lib/auth-helpers";
 import {
   createUserSchema,

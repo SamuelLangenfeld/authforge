@@ -15,8 +15,9 @@ export interface ApiAuthContext {
 /**
  * Extracts API authentication context from request headers
  * These headers are set by the middleware after validating the Bearer token
+ * @internal
  */
-export function extractApiAuthContext(
+function extractApiAuthContext(
   request: NextRequest
 ): ApiAuthContext | null {
   const orgId = request.headers.get("x-org-id");
@@ -32,8 +33,9 @@ export function extractApiAuthContext(
 /**
  * Validates that the API client is authenticated and has access to the organization
  * Returns the auth context or an error response
+ * @internal
  */
-export async function validateApiAuth(request: NextRequest) {
+async function validateApiAuth(request: NextRequest) {
   const authContext = extractApiAuthContext(request);
 
   if (!authContext) {

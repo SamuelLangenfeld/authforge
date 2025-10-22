@@ -64,24 +64,6 @@ export function createSuccessMessageResponse(
 }
 
 /**
- * Standardized unauthorized error (401)
- */
-export function createUnauthorizedError(
-  message: string = "Unauthorized"
-): NextResponse {
-  return createErrorResponse(message, 401);
-}
-
-/**
- * Standardized forbidden error (403)
- */
-export function createForbiddenError(
-  message: string = "Forbidden"
-): NextResponse {
-  return createErrorResponse(message, 403);
-}
-
-/**
  * Standardized not found error (404)
  */
 export function createNotFoundError(
