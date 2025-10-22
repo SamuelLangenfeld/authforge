@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import prisma from "@/app/lib/db";
 import { sendInvitationEmail } from "@/app/lib/email";
 import {

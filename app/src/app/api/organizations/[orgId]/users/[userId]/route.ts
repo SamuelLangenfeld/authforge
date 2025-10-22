@@ -75,7 +75,7 @@ export async function PATCH(
     const { email, name, password } = validationResult.data;
 
     // Build update data
-    const updateData: any = {};
+    const updateData: Record<string, string> = {};
     if (email !== undefined) {
       // Check if email is not already used by another user
       const otherUserWithEmail = await prisma.user.findUnique({
@@ -153,13 +153,7 @@ export async function DELETE(
     }
     */
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "User removed from organization",
-      },
-      { status: 200 }
-    );
+    return createSuccessMessageResponse("User removed from organization");
   } catch (e: unknown) {
     return handleRouteError(e);
   }

@@ -1,4 +1,4 @@
-export default (e: unknown) => {
+const errorMessage = (e: unknown) => {
   let message;
   if (e instanceof Error) {
     message = e.message;
@@ -10,3 +10,5 @@ export default (e: unknown) => {
   }
   return message;
 };
+
+export default errorMessage;

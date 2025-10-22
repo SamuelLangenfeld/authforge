@@ -9,7 +9,7 @@ export function handleValidationError<T>(
   validationResult: ZodSafeParseResult<T>
 ): NextResponse | null {
   if (!validationResult.success) {
-    const errors = validationResult.error.issues.map((err: any) => ({
+    const errors = validationResult.error.issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));
@@ -35,7 +35,7 @@ export function handleQueryValidationError<T>(
   validationResult: ZodSafeParseResult<T>
 ): NextResponse | null {
   if (!validationResult.success) {
-    const errors = validationResult.error.issues.map((err: any) => ({
+    const errors = validationResult.error.issues.map((err) => ({
       field: err.path.join("."),
       message: err.message,
     }));

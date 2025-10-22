@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     let payload;
     try {
       payload = await verifyToken(refresh_token);
-    } catch (e) {
+    } catch {
       return createErrorResponse(invalidMessage, 401);
     }
 

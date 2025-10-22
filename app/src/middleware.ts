@@ -87,7 +87,7 @@ export async function middleware(request: NextRequest) {
           headers: requestHeaders,
         },
       });
-    } catch (e) {
+    } catch {
       if (pathname.startsWith("/api")) {
         return NextResponse.json(
           { error: "Unauthorized - Invalid JWT" },

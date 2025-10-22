@@ -1,4 +1,5 @@
 // API client functions for making HTTP requests
+import { Member } from "./types";
 
 type ApiResponse<T> = {
   success: boolean;
@@ -40,7 +41,7 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     });
 
-    return handleResponse<ApiResponse<any>>(response);
+    return handleResponse<ApiResponse<unknown>>(response);
   },
 
   async register(
@@ -57,7 +58,7 @@ export const authApi = {
       body: JSON.stringify({ email, password, name, orgName }),
     });
 
-    return handleResponse<ApiResponse<any>>(response);
+    return handleResponse<ApiResponse<unknown>>(response);
   },
 
   async logout() {
@@ -65,7 +66,7 @@ export const authApi = {
       method: "POST",
     });
 
-    return handleResponse<ApiResponse<any>>(response);
+    return handleResponse<ApiResponse<unknown>>(response);
   },
 };
 
@@ -75,7 +76,7 @@ export const organizationApi = {
       `/api/organizations/${organizationId}/members`
     );
 
-    return handleResponse<{ success: boolean; members: any[] }>(response);
+    return handleResponse<{ success: boolean; members: Member[] }>(response);
   },
 };
 

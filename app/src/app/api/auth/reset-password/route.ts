@@ -55,9 +55,12 @@ export async function POST(req: NextRequest) {
     );
     if (tokenError) return tokenError;
 
+    // At this point, resetToken is guaranteed to be non-null
+    const validResetToken = resetToken!;
+
     // Find the user
     const user = await prisma.user.findUnique({
-      where: { id: resetToken.userId },
+      where: { id: validResetToken.userId },
     });
 
     if (!user) {
@@ -75,7 +78,7 @@ export async function POST(req: NextRequest) {
 
     // Delete the used reset token
     await prisma.passwordResetToken.delete({
-      where: { id: resetToken.id },
+      where: { id: validResetToken.id },
     });
 
     return createSuccessMessageResponse("Password has been reset successfully");

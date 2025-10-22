@@ -140,7 +140,7 @@ export async function checkRateLimit(
   } catch (error) {
     // Rate limit exceeded
     if (error instanceof Error && 'msBeforeNext' in error) {
-      const rateLimitError = error as any;
+      const rateLimitError = error as Error & { msBeforeNext?: number };
       return {
         allowed: false,
         limit: limiter.points,

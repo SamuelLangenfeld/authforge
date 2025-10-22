@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
       user = await prisma.user.create({
         data: {
-          email: invitation.email,
+          email: validInvitation.email,
           name,
           password: hashedPassword,
           emailVerified: new Date(), // Auto-verify invited users

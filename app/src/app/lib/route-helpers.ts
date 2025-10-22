@@ -46,12 +46,12 @@ export function createSuccessResponse<T>(
  * Standardized success response with message
  * Use this for create/update/delete operations
  */
-export function createSuccessMessageResponse(
+export function createSuccessMessageResponse<T = unknown>(
   message: string,
-  data?: any,
+  data?: T,
   status: number = 200
 ): NextResponse {
-  const response: any = {
+  const response: Record<string, unknown> = {
     success: true,
     message,
   };

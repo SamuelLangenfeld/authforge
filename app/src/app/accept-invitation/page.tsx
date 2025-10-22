@@ -9,7 +9,6 @@ export default function AcceptInvitation() {
   const router = useRouter();
   const token = searchParams.get("token");
 
-  const [step, setStep] = useState<"verify" | "register" | "login">("verify");
   const [name, setName] = useState("");
   const [password, setConfirmPassword] = useState("");
   const [confirmPassword, setConfirmPasswordField] = useState("");
@@ -37,7 +36,7 @@ export default function AcceptInvitation() {
       // This will fail but we can extract info from error response
       // For now, we'll proceed directly to the form
       setLoading(false);
-    } catch (err) {
+    } catch {
       setError("Failed to verify invitation");
       setLoading(false);
     }
@@ -87,7 +86,7 @@ export default function AcceptInvitation() {
       setTimeout(() => {
         router.push("/landing");
       }, 3000);
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
       setLoading(false);
     }

@@ -29,7 +29,7 @@ export default function ForgotPassword() {
       }
 
       setSubmitted(true);
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export default function ForgotPassword() {
                 Check your email for password reset instructions
               </p>
               <p className="text-green-700 text-xs">
-                If you don't see an email, check your spam folder or try requesting another reset.
+                If you don&apos;t see an email, check your spam folder or try requesting another reset.
               </p>
             </div>
             <Link
@@ -65,7 +65,7 @@ export default function ForgotPassword() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-gray-600 text-sm mb-6">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we&apos;ll send you a link to reset your password.
             </p>
 
             {error && (

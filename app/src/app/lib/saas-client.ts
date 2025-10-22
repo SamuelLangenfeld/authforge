@@ -85,7 +85,7 @@ interface ApiResponse<T> {
   data?: T;
   message?: string;
   error?: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -95,7 +95,7 @@ class SaaSClientError extends Error {
   constructor(
     message: string,
     public status?: number,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = "SaaSClientError";
@@ -138,7 +138,7 @@ class SaaSClient {
         if (this.accessToken) {
           return this.accessToken;
         }
-      } catch (error) {
+      } catch {
         // Fall through to authenticate with client credentials
       }
     }
@@ -221,7 +221,7 @@ class SaaSClient {
   async request<T>(
     method: string,
     endpoint: string,
-    body?: any
+    body?: unknown
   ): Promise<ApiResponse<T>> {
     const token = await this.getAccessToken();
 
