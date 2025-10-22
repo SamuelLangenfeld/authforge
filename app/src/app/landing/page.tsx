@@ -111,14 +111,6 @@ export default function Landing({ verified = false }: LandingProps) {
               <label className="block text-sm font-medium text-gray-700">
                 Password
               </label>
-              {mode === "signin" && (
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Forgot?
-                </Link>
-              )}
             </div>
             <input
               type="password"
@@ -146,6 +138,14 @@ export default function Landing({ verified = false }: LandingProps) {
               />
             </div>
           )}
+          {mode === "signin" && (
+            <Link
+              href="/forgot-password"
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Forgot your password?
+            </Link>
+          )}
           <button
             type="submit"
             disabled={loading}
@@ -154,8 +154,8 @@ export default function Landing({ verified = false }: LandingProps) {
             {loading
               ? "Please wait..."
               : mode === "signin"
-              ? "Sign In"
-              : "Create Account"}
+                ? "Sign In"
+                : "Create Account"}
           </button>
         </form>
       </div>

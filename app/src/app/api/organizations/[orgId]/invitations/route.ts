@@ -9,7 +9,6 @@ import {
 } from "@/app/lib/route-helpers";
 import { generateInvitationToken } from "@/app/lib/token-helpers";
 import { sendInvitationSchema } from "@/app/lib/schemas";
-import { validateOrgAccess } from "@/app/lib/auth-helpers";
 
 /**
  * POST /api/organizations/[orgId]/invitations
@@ -41,10 +40,23 @@ export async function POST(
       return createErrorResponse("Unauthorized", 401);
     }
 
-    // Validate user is admin of this organization
-    const adminCheck = await validateOrgAccess(req, orgId);
-    if (!adminCheck.valid) {
-      return adminCheck.response!;
+    // Check if user is a member of this organization and has admin role
+    const userMembership = await prisma.membership.findFirst({
+      where: {
+        userId,
+        orgId,
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    if (!userMembership) {
+      return createErrorResponse("Not a member of this organization", 403);
+    }
+
+    if (userMembership.role.name !== "admin") {
+      return createErrorResponse("Admin access required", 403);
     }
 
     const body = await req.json();
