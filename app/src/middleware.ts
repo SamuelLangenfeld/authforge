@@ -3,14 +3,11 @@ import { verifyToken } from "./app/lib/jwt";
 import { UserJWTPayload, APIJWTPayload } from "./app/lib/types";
 import env from "./app/lib/env";
 import {
-  checkRateLimit,
+  applyRateLimit,
   getClientIdentifier,
-  getRateLimitHeaders,
-  authRateLimiter,
-  registrationRateLimiter,
-  tokenRateLimiter,
-  refreshRateLimiter,
   apiRateLimiter,
+  checkRateLimit,
+  getRateLimitHeaders,
 } from "./app/lib/ratelimit";
 import { getCorsHeaders } from "./app/lib/cors";
 
@@ -21,6 +18,9 @@ const publicRoutes = [
   "/api/auth/logout",
   "/api/auth/refresh",
   "/api/auth/verify-email",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+  "/api/invitations/accept",
 ];
 
 const clientRoutes = ["/dashboard", "/api/organizations"];
@@ -50,68 +50,10 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // Apply rate limiting to auth endpoints
-  if (pathname.startsWith("/api/auth/login")) {
-    const rateLimitResult = await checkRateLimit(clientId, authRateLimiter);
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: "Too many requests. Please try again later.",
-        },
-        {
-          status: 429,
-          headers: getRateLimitHeaders(rateLimitResult),
-        }
-      );
-    }
-  }
-
-  if (pathname.startsWith("/api/auth/register")) {
-    const rateLimitResult = await checkRateLimit(
-      clientId,
-      registrationRateLimiter
-    );
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: "Too many requests. Please try again later.",
-        },
-        {
-          status: 429,
-          headers: getRateLimitHeaders(rateLimitResult),
-        }
-      );
-    }
-  }
-
-  if (pathname.startsWith("/api/auth/token")) {
-    const rateLimitResult = await checkRateLimit(clientId, tokenRateLimiter);
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: "Too many requests. Please try again later.",
-        },
-        {
-          status: 429,
-          headers: getRateLimitHeaders(rateLimitResult),
-        }
-      );
-    }
-  }
-
-  if (pathname.startsWith("/api/auth/refresh")) {
-    const rateLimitResult = await checkRateLimit(clientId, refreshRateLimiter);
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: "Too many requests. Please try again later.",
-        },
-        {
-          status: 429,
-          headers: getRateLimitHeaders(rateLimitResult),
-        }
-      );
-    }
+  // Apply rate limiting to configured auth and invitation endpoints
+  const rateLimitResponse = await applyRateLimit(pathname, clientId);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   if (

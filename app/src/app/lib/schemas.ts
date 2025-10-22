@@ -81,6 +81,60 @@ export const resendVerificationSchema = z.object({
 
 export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
 
+/**
+ * Forgot password schema
+ * POST /api/auth/forgot-password
+ * Requests a password reset email
+ */
+export const forgotPasswordSchema = z.object({
+  email: z.email("Invalid email address"),
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+/**
+ * Reset password schema
+ * POST /api/auth/reset-password
+ * Completes the password reset with a token and new password
+ */
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  password: z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .max(72, "Password must be less than 72 characters"),
+});
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+/**
+ * Send invitation schema
+ * POST /api/organizations/[orgId]/invitations
+ * Admin invites a user to join their organization
+ */
+export const sendInvitationSchema = z.object({
+  email: z.email("Invalid email address"),
+});
+
+export type SendInvitationInput = z.infer<typeof sendInvitationSchema>;
+
+/**
+ * Accept invitation schema
+ * POST /api/invitations/accept
+ * User accepts an invitation and either registers or joins existing account
+ */
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(1, "Invitation token is required"),
+  name: z.string().min(1, "Name is required").max(100).optional(), // For registration
+  password: z
+    .string()
+    .min(12, "Password must be at least 12 characters")
+    .max(72, "Password must be less than 72 characters")
+    .optional(), // For registration
+});
+
+export type AcceptInvitationInput = z.infer<typeof acceptInvitationSchema>;
+
 // ============================================================================
 // SaaS CRUD API Schemas
 // ============================================================================

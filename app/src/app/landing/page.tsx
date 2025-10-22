@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/app/lib/hooks/useAuth";
 import { useVerifiedMessage } from "@/app/lib/hooks/useVerifiedMessage";
 
@@ -106,9 +107,19 @@ export default function Landing({ verified = false }: LandingProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              {mode === "signin" && (
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Forgot?
+                </Link>
+              )}
+            </div>
             <input
               type="password"
               name="password"

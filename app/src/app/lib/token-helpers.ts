@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
  */
 export const TOKEN_CONFIG = {
   VERIFICATION_TOKEN_EXPIRY_HOURS: 24,
+  INVITATION_TOKEN_EXPIRY_DAYS: 7,
   REFRESH_TOKEN_EXPIRY_DAYS: 30,
   API_CLIENT_ID_LENGTH: 16, // bytes
   API_CLIENT_SECRET_LENGTH: 32, // bytes
@@ -49,4 +50,20 @@ export function getRefreshTokenExpiration(): Date {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + TOKEN_CONFIG.REFRESH_TOKEN_EXPIRY_DAYS);
   return expiresAt;
+}
+
+/**
+ * Generates an invitation token for organization invitations
+ * Returns both the token and its expiration time
+ */
+export function generateInvitationToken(): {
+  token: string;
+  expiresAt: Date;
+} {
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date();
+  expiresAt.setDate(
+    expiresAt.getDate() + TOKEN_CONFIG.INVITATION_TOKEN_EXPIRY_DAYS
+  );
+  return { token, expiresAt };
 }

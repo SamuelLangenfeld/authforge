@@ -4,6 +4,7 @@
  */
 
 import { RateLimiterMemory } from "rate-limiter-flexible";
+import { NextResponse } from "next/server";
 
 /**
  * Pre-configured rate limiters for different endpoints
@@ -11,8 +12,8 @@ import { RateLimiterMemory } from "rate-limiter-flexible";
 
 // Strict rate limiting for auth endpoints (5 requests per minute)
 export const authRateLimiter = new RateLimiterMemory({
-  points: 5, // Number of requests
-  duration: 60, // Per 60 seconds
+  points: 5,
+  duration: 60,
 });
 
 // More lenient for API endpoints (60 requests per minute)
@@ -38,6 +39,78 @@ export const refreshRateLimiter = new RateLimiterMemory({
   points: 10,
   duration: 60,
 });
+
+// Forgot password endpoint (5 requests per minute)
+export const forgotPasswordRateLimiter = new RateLimiterMemory({
+  points: 5,
+  duration: 60,
+});
+
+// Reset password endpoint (5 requests per minute - strict to prevent token brute force)
+export const resetPasswordRateLimiter = new RateLimiterMemory({
+  points: 5,
+  duration: 60,
+});
+
+// Accept invitation endpoint (5 requests per minute - strict to prevent token brute force)
+export const acceptInvitationRateLimiter = new RateLimiterMemory({
+  points: 5,
+  duration: 60,
+});
+
+/**
+ * Configuration mapping routes to their rate limiters
+ * Each entry specifies a route pattern and its corresponding rate limiter
+ */
+const rateLimitConfig: Array<{
+  pattern: string;
+  limiter: RateLimiterMemory;
+}> = [
+  { pattern: "/api/auth/login", limiter: authRateLimiter },
+  { pattern: "/api/auth/register", limiter: registrationRateLimiter },
+  { pattern: "/api/auth/token", limiter: tokenRateLimiter },
+  { pattern: "/api/auth/refresh", limiter: refreshRateLimiter },
+  { pattern: "/api/auth/forgot-password", limiter: forgotPasswordRateLimiter },
+  { pattern: "/api/auth/reset-password", limiter: resetPasswordRateLimiter },
+  { pattern: "/api/invitations/accept", limiter: acceptInvitationRateLimiter },
+];
+
+/**
+ * Apply rate limiting to a request based on pathname
+ * Finds the matching route in config and applies its rate limiter
+ *
+ * @param pathname - The request pathname
+ * @param clientId - Unique identifier for rate limiting
+ * @returns NextResponse if rate limited, null if allowed
+ */
+export async function applyRateLimit(
+  pathname: string,
+  clientId: string
+): Promise<NextResponse | null> {
+  // Find the matching rate limiter config for this pathname
+  const config = rateLimitConfig.find((entry) => pathname.startsWith(entry.pattern));
+
+  if (!config) {
+    // No rate limit configured for this path
+    return null;
+  }
+
+  const result = await checkRateLimit(clientId, config.limiter);
+
+  if (!result.allowed) {
+    return NextResponse.json(
+      {
+        error: "Too many requests. Please try again later.",
+      },
+      {
+        status: 429,
+        headers: getRateLimitHeaders(result),
+      }
+    );
+  }
+
+  return null;
+}
 
 /**
  * Check if a request should be rate limited

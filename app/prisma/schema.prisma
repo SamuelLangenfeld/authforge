@@ -9,14 +9,15 @@ datasource db {
 }
 
 model User {
-  id                 String              @id @default(uuid())
-  email              String              @unique
-  name               String
-  password           String
-  emailVerified      DateTime?
-  memberships        Membership[]
-  verificationTokens VerificationToken[]
-  createdAt          DateTime            @default(now())
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  name                  String
+  password              String
+  emailVerified         DateTime?
+  memberships           Membership[]
+  verificationTokens    VerificationToken[]
+  passwordResetTokens   PasswordResetToken[]
+  createdAt             DateTime               @default(now())
 
   @@index([email])
 }
@@ -26,6 +27,7 @@ model Organization {
   name         String
   memberships  Membership[]
   apiCredentials  ApiCredential[]
+  invitations  Invitation[]
 }
 
 model ApiCredential {
@@ -82,6 +84,35 @@ model VerificationToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model Invitation {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  orgId     String
+  createdBy String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([email])
   @@index([token])
   @@index([expiresAt])
 }
