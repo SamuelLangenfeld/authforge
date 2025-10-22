@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function ResetPassword() {
+function ResetPasswordClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
@@ -186,5 +186,31 @@ export default function ResetPassword() {
         )}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+          AuthForge
+        </h1>
+        <h2 className="text-lg font-semibold text-center text-gray-700 mb-8">
+          Loading...
+        </h2>
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ResetPasswordClient />
+    </Suspense>
   );
 }
