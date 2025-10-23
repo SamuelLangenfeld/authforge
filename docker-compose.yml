@@ -1,0 +1,129 @@
+version: '3.9'
+
+services:
+  # ============================================================================
+  # PostgreSQL Database Service
+  # ============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: authforge_db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${DB_USER:-authforge}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-development_password}
+      POSTGRES_DB: ${DB_NAME:-authforge}
+      POSTGRES_INITDB_ARGS: "--locale en_US.UTF-8"
+
+    volumes:
+      # Persistent volume for database data
+      - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+    # Health check to verify database is ready
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-authforge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    networks:
+      - authforge_network
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512M
+        reservations:
+          cpus: '1'
+          memory: 256M
+
+  # ============================================================================
+  # AuthForge Application Service
+  # ============================================================================
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+
+    container_name: authforge_app
+    restart: unless-stopped
+
+    # Environment variables
+    environment:
+      # Node.js configuration
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=512}
+
+      # Database configuration
+      DATABASE_URL: postgresql://${DB_USER:-authforge}:${DB_PASSWORD:-development_password}@db:5432/${DB_NAME:-authforge}
+
+      # Application configuration
+      HOST_URL: ${HOST_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET}
+
+      # Email service configuration
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+      FROM_EMAIL: ${FROM_EMAIL}
+
+      # CORS configuration
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+
+    # Port mapping (host:container)
+    ports:
+      - "${PORT:-3000}:3000"
+
+    # Volume mounts
+    volumes:
+      # Mount .env file (DO NOT mount secrets in production)
+      - ./.env.local:/app/.env.local:ro
+
+    # Service dependencies
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - authforge_network
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '1'
+          memory: 512M
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  authforge_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  postgres_data:
+    driver: local
