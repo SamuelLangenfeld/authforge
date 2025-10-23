@@ -1,14 +1,14 @@
 const errorMessage = (e: unknown) => {
-  let message;
   if (e instanceof Error) {
-    message = e.message;
+    return e.message;
   }
   if (typeof e === "string") {
-    message = e;
-  } else {
-    message = `Unexpected Error: ${e}`;
+    return e;
   }
-  return message;
+  if (e && typeof e === "object" && "message" in e) {
+    return (e as Record<string, unknown>).message as string;
+  }
+  return `Unexpected Error: ${JSON.stringify(e)}`;
 };
 
 export default errorMessage;

@@ -63,7 +63,8 @@ export async function sendVerificationEmail(
     await mailersend.email.send(params);
     return { success: true };
   } catch (error) {
-    console.error("Error sending verification email:", error);
+    const errorDetails = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error("Error sending verification email:", errorDetails);
     throw error;
   }
 }
@@ -121,7 +122,8 @@ export async function sendPasswordResetEmail(
     await mailersend.email.send(params);
     return { success: true };
   } catch (error) {
-    console.error("Error sending password reset email:", error);
+    const errorDetails = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error("Error sending password reset email:", errorDetails);
     throw error;
   }
 }
@@ -181,7 +183,8 @@ export async function sendInvitationEmail(
     await mailersend.email.send(params);
     return { success: true };
   } catch (error) {
-    console.error("Error sending invitation email:", error);
+    const errorDetails = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error("Error sending invitation email:", errorDetails);
     throw error;
   }
 }
