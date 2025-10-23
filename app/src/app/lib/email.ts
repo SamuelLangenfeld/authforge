@@ -1,14 +1,14 @@
 /**
- * Email service using MailerSend
+ * Email service using Mailgun
  * Handles sending verification emails and other transactional emails
  */
 
-import { MailerSend, EmailParams, Recipient } from "mailersend";
+import formData from "form-data";
+import Mailgun from "mailgun.js";
 import env from "./env";
 
-const mailersend = new MailerSend({
-  apiKey: env.MAILERSEND_API_KEY,
-});
+const mailgun = new Mailgun(formData);
+const mg = mailgun.client({ username: "api", key: env.MAILGUN_API_KEY });
 
 export async function sendVerificationEmail(
   email: string,
@@ -17,16 +17,11 @@ export async function sendVerificationEmail(
   const verificationUrl = `${env.HOST_URL}/api/auth/verify-email?token=${verificationToken}`;
 
   try {
-    const params = new EmailParams()
-      .setFrom({
-        email: env.FROM_EMAIL,
-        name: "AuthForge",
-      })
-      .setTo([
-        new Recipient(email),
-      ])
-      .setSubject("Verify your email address")
-      .setHtml(`
+    await mg.messages.create(`${env.MAILGUN_DOMAIN}`, {
+      from: `AuthForge <${env.FROM_EMAIL}>`,
+      to: email,
+      subject: "Verify your email address",
+      html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -58,12 +53,12 @@ export async function sendVerificationEmail(
             </div>
           </body>
         </html>
-      `);
-
-    await mailersend.email.send(params);
+      `,
+    });
     return { success: true };
   } catch (error) {
-    const errorDetails = error instanceof Error ? error.message : JSON.stringify(error);
+    const errorDetails =
+      error instanceof Error ? error.message : JSON.stringify(error);
     console.error("Error sending verification email:", errorDetails);
     throw error;
   }
@@ -76,16 +71,11 @@ export async function sendPasswordResetEmail(
   const resetUrl = `${env.HOST_URL}/reset-password?token=${resetToken}`;
 
   try {
-    const params = new EmailParams()
-      .setFrom({
-        email: env.FROM_EMAIL,
-        name: "AuthForge",
-      })
-      .setTo([
-        new Recipient(email),
-      ])
-      .setSubject("Reset your password")
-      .setHtml(`
+    await mg.messages.create(`${env.MAILGUN_DOMAIN}`, {
+      from: `AuthForge <${env.FROM_EMAIL}>`,
+      to: email,
+      subject: "Reset your password",
+      html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -117,12 +107,12 @@ export async function sendPasswordResetEmail(
             </div>
           </body>
         </html>
-      `);
-
-    await mailersend.email.send(params);
+      `,
+    });
     return { success: true };
   } catch (error) {
-    const errorDetails = error instanceof Error ? error.message : JSON.stringify(error);
+    const errorDetails =
+      error instanceof Error ? error.message : JSON.stringify(error);
     console.error("Error sending password reset email:", errorDetails);
     throw error;
   }
@@ -136,16 +126,11 @@ export async function sendInvitationEmail(
   const acceptUrl = `${env.HOST_URL}/accept-invitation?token=${invitationToken}`;
 
   try {
-    const params = new EmailParams()
-      .setFrom({
-        email: env.FROM_EMAIL,
-        name: "AuthForge",
-      })
-      .setTo([
-        new Recipient(email),
-      ])
-      .setSubject(`You're invited to join ${organizationName}`)
-      .setHtml(`
+    await mg.messages.create(`${env.MAILGUN_DOMAIN}`, {
+      from: `AuthForge <${env.FROM_EMAIL}>`,
+      to: email,
+      subject: `You're invited to join ${organizationName}`,
+      html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -178,12 +163,12 @@ export async function sendInvitationEmail(
             </div>
           </body>
         </html>
-      `);
-
-    await mailersend.email.send(params);
+      `,
+    });
     return { success: true };
   } catch (error) {
-    const errorDetails = error instanceof Error ? error.message : JSON.stringify(error);
+    const errorDetails =
+      error instanceof Error ? error.message : JSON.stringify(error);
     console.error("Error sending invitation email:", errorDetails);
     throw error;
   }
