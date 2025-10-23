@@ -76,7 +76,9 @@ export const organizationApi = {
       `/api/organizations/${organizationId}/members`
     );
 
-    return handleResponse<{ success: boolean; members: Member[] }>(response);
+    return handleResponse<{ success: boolean; data: { members: Member[] } }>(
+      response
+    );
   },
 };
 

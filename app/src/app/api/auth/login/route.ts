@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/app/lib/db";
-import errorMessage from "@/app/lib/errorMessage";
 import { generateToken } from "@/app/lib/jwt";
 import { setJwtCookie } from "@/app/lib/cookie-helpers";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/app/lib/schemas";
+import { handleValidationError, createErrorResponse } from "@/app/lib/route-helpers";
 
 const getCredentialError = () => {
-  return NextResponse.json(
-    { success: false, message: "invalid credentials" },
-    { status: 401 }
-  );
+  return createErrorResponse("invalid credentials", 401);
 };
 
 export async function POST(req: NextRequest) {
@@ -20,25 +17,13 @@ export async function POST(req: NextRequest) {
 
     // Validate input with Zod
     const validationResult = loginSchema.safeParse(body);
+    const validationError = handleValidationError(validationResult);
+    if (validationError) return validationError;
 
+    // Use validated data (type-safe after validation check)
     if (!validationResult.success) {
-      // Extract user-friendly error messages
-      const errors = validationResult.error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors,
-        },
-        { status: 400 }
-      );
+      throw new Error("Validation should have been caught earlier");
     }
-
-    // Use validated data
     const { email, password } = validationResult.data;
     user = await prisma.user.findUnique({
       where: { email: email },
@@ -63,8 +48,7 @@ export async function POST(req: NextRequest) {
     setJwtCookie(response, token);
 
     return response;
-  } catch (e: unknown) {
-    const message = errorMessage(e);
-    return NextResponse.json({ success: false, message }, { status: 500 });
+  } catch {
+    return createErrorResponse("Internal server error", 500);
   }
 }

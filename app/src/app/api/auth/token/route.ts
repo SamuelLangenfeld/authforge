@@ -19,7 +19,7 @@ import { tokenSchema } from "@/app/lib/schemas";
  * - Returns both tokens to the client
  *
  * @param req - Request body should contain { clientId, clientSecret }
- * @returns JSON with access_token, refresh_token, token_type, and expires_in
+ * @returns JSON with accessToken, refreshToken, tokenType, and expiresIn
  */
 export async function POST(req: NextRequest) {
   try {
@@ -74,10 +74,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      token_type: "Bearer",
-      expires_in: 3600, // 1 hour in seconds
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      tokenType: "Bearer",
+      expiresIn: 3600, // 1 hour in seconds
     });
   } catch (e: unknown) {
     return handleRouteError(e);

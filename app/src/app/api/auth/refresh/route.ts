@@ -25,8 +25,8 @@ const invalidMessage = "Invalid or expired token";
  * - Deletes the old refresh token and stores the new one
  * - Returns both new tokens to the client
  *
- * @param req - Request body should contain { refresh_token }
- * @returns JSON with access_token, refresh_token, token_type, and expires_in
+ * @param req - Request body should contain { refreshToken }
+ * @returns JSON with accessToken, refreshToken, tokenType, and expiresIn
  */
 export async function POST(req: NextRequest) {
   try {
@@ -41,12 +41,12 @@ export async function POST(req: NextRequest) {
     if (!validationResult.success) {
       throw new Error("Validation should have been caught earlier");
     }
-    const { refresh_token } = validationResult.data;
+    const { refreshToken } = validationResult.data;
 
     // Verify JWT signature and expiration
     let payload;
     try {
-      payload = await verifyToken(refresh_token);
+      payload = await verifyToken(refreshToken);
     } catch {
       return createErrorResponse(invalidMessage, 401);
     }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     // Find refresh token in database
     const storedToken = await prisma.refreshToken.findFirst({
       where: {
-        token: refresh_token,
+        token: refreshToken,
         clientId,
       },
     });
@@ -110,10 +110,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      access_token: newAccessToken,
-      refresh_token: newRefreshToken,
-      token_type: "Bearer",
-      expires_in: 3600, // 1 hour in seconds
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      tokenType: "Bearer",
+      expiresIn: 3600, // 1 hour in seconds
     });
   } catch (e: unknown) {
     return handleRouteError(e);

@@ -18,7 +18,7 @@ export function useOrganizationMembers(organizationId: string) {
       setError(null);
 
       try {
-        const data = await organizationApi.getMembers(organizationId);
+        const { data } = await organizationApi.getMembers(organizationId);
         setMembers(data.members || []);
       } catch (err) {
         if (err instanceof ApiError) {

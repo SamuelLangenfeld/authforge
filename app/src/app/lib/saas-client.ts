@@ -38,9 +38,9 @@ interface SaaSClientConfig {
 }
 
 interface TokenResponse {
-  success: boolean;
   accessToken: string;
   refreshToken: string;
+  tokenType: string;
   expiresIn: number;
 }
 
@@ -48,8 +48,8 @@ interface UserData {
   id: string;
   email: string;
   name: string;
-  emailVerified: string;
-  createdAt: string;
+  emailVerified: Date | null;
+  createdAt: Date;
 }
 
 interface CreateUserInput {
@@ -168,7 +168,7 @@ class SaaSClient {
 
     const data: TokenResponse = await response.json();
 
-    if (!response.ok || !data.success) {
+    if (!response.ok) {
       throw new SaaSClientError(
         "Authentication failed",
         response.status,
@@ -199,7 +199,7 @@ class SaaSClient {
 
     const data: TokenResponse = await response.json();
 
-    if (!response.ok || !data.success) {
+    if (!response.ok) {
       // Clear tokens if refresh fails
       this.accessToken = null;
       this.refreshToken = null;

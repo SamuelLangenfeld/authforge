@@ -63,7 +63,7 @@ export type TokenInput = z.infer<typeof tokenSchema>;
  * Exchanges refresh token for new access token
  */
 export const refreshSchema = z.object({
-  refresh_token: z
+  refreshToken: z
     .string()
     .min(1, "Refresh token is required")
     .max(1000, "Refresh token is too long"),
