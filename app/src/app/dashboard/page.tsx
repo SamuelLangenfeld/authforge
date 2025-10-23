@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import prisma from "@/app/lib/db";
 import { userWithMembershipsSelect } from "@/app/lib/prisma-helpers";
 
+export const dynamic = "force-dynamic";
+
 export default async function Dashboard({
   searchParams,
 }: {

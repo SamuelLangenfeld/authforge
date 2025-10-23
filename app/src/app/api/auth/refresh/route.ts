@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     if (tokenError) return tokenError;
 
     // At this point, storedToken is guaranteed to be non-null
-    const refreshToken = storedToken!;
+    const storedRefreshToken = storedToken!;
 
     // Look up the API credential to get the orgId
     const apiCredential = await prisma.apiCredential.findUnique({
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     // Rotate refresh token: delete old token and store new one
     await prisma.refreshToken.delete({
-      where: { id: refreshToken.id },
+      where: { id: storedRefreshToken.id },
     });
 
     await prisma.refreshToken.create({
