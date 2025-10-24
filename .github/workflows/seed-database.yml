@@ -9,6 +9,8 @@ on:
 jobs:
   seed:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +25,4 @@ jobs:
         run: npm install --prefix app
 
       - name: Run seed script
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run seed --prefix app
