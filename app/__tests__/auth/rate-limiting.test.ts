@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest';
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const SKIP_NETWORK_TESTS = !process.env.RUN_NETWORK_TESTS;
 
 /**
  * Note: Rate limiting is typically per-IP address.
@@ -22,7 +23,7 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
  * In that case, you may need to adjust test setup.
  */
 
-describe('Rate Limiting - Brute Force Prevention', () => {
+describe.skipIf(SKIP_NETWORK_TESTS)('Rate Limiting - Brute Force Prevention', () => {
   describe('Login Rate Limiting', () => {
     it('should allow normal login attempts', async () => {
       // A few legitimate attempts should be allowed

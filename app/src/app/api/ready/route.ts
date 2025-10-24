@@ -26,7 +26,7 @@ import prisma from '@/app/lib/db';
 export async function GET() {
   try {
     // Check database connectivity
-    const dbCheck = await Promise.race([
+    await Promise.race([
       prisma.$queryRaw`SELECT 1`,
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Database timeout')), 5000)
