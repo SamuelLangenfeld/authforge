@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "prisma migrate reset && ts-node prisma/seed.ts",
+    "seed:force": "prisma migrate reset --force && ts-node prisma/seed.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run"
