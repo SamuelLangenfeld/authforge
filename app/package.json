@@ -8,8 +8,8 @@
     "postinstall": "prisma generate --no-engine && prisma migrate deploy",
     "start": "next start",
     "lint": "eslint",
-    "seed": "prisma migrate reset && ts-node prisma/seed.ts",
-    "seed:force": "prisma migrate reset --force && ts-node prisma/seed.ts",
+    "seed": "prisma migrate reset && tsx prisma/seed.ts",
+    "seed:force": "prisma migrate reset --force && tsx prisma/seed.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run"
@@ -26,7 +26,6 @@
     "rate-limiter-flexible": "^8.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "ts-node": "^10.9.2",
     "typescript-eslint": "^8.46.2",
     "zod": "^4.1.12"
   },
