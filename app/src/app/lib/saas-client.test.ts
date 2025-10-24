@@ -10,7 +10,6 @@ import {
   SaaSClient,
   SaaSClientError,
   type SaaSClientConfig,
-  type UserData,
 } from './saas-client';
 
 // Mock global fetch
